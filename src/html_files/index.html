@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Date and Time Submission</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 50px;
+      }
+      form {
+        display: flex;
+        flex-direction: column;
+        width: 300px;
+      }
+      label {
+        margin: 10px 0 5px;
+      }
+      input {
+        padding: 8px;
+        margin-bottom: 15px;
+      }
+      button {
+        padding: 10px;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Settings</h1>
+    <!-- <a href="?led=0">0</a>
+    <a href="?led=1">1</a> -->
+    <form id="dateTimeForm">
+      <h2>Start Time</h2>
+      <label for="startDate">Date:</label>
+      <input type="date" id="startDate" name="startDate" required />
+      <label for="startTime">Time:</label>
+      <input type="time" id="startTime" name="startTime" required />
+
+      <h2>Birthday Time</h2>
+      <label for="birthdayDate">Date:</label>
+      <input type="date" id="birthdayDate" name="birthdayDate" required />
+      <label for="birthdayTime">Time:</label>
+      <input type="time" id="birthdayTime" name="birthdayTime" required />
+      <button type="submit">Submit</button>
+    </form>
+
+    <script>
+      const form = document.getElementById("dateTimeForm");
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault(); // Prevent page reload
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, "0");
+        const day = String(now.getDate()).padStart(2, "0");
+        const hours = String(now.getHours()).padStart(2, "0");
+        const minutes = String(now.getMinutes()).padStart(2, "0");
+        const seconds = String(now.getSeconds()).padStart(2, "0");
+        const currentDate = `${year}-${month}-${day}`;
+        const currentTime = `${hours}:${minutes}:${seconds}`;
+        const startDate = document.getElementById("startDate").value;
+        const startTime = document.getElementById("startTime").value;
+        const birthdayDate = document.getElementById("birthdayDate").value;
+        const birthdayTime = document.getElementById("birthdayTime").value;
+        const baseURL = window.location.origin + window.location.pathname;
+        window.location.href = `${baseURL}?currentDate=${currentDate}&currentTime=${currentTime}&startDate=${startDate}&startTime=${startTime}&birthdayDate=${birthdayDate}&birthdayTime=${birthdayTime}`;
+      });
+    </script>
+  </body>
+</html>
