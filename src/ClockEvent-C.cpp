@@ -175,7 +175,7 @@ int main()
     {
         // printf("%s", html_content);
         tm current_time;
-        // ap_mode(current_time, settings, display);
+        ap_mode(current_time, settings, display);
         setDS3231Time(&current_time);
     }
 
