@@ -72,10 +72,10 @@ void ap_mode(tm &current_time, Settings &settings, ST7735 &display)
     }
     display.fill(ST7735_BLACK);
     state->complete = false;
-    GraphicsText display_title_msg(0, 8, "AP mode!", 2);
+    GraphicsText display_title_msg(0, 8, "AP mode!", 1);
     GraphicsText display_info_msg(0, 0,
                                   std::string("Name:\n") + AP_WIFI_NAME + std::string("\n\nPassword:\n") + AP_WIFI_PASSWORD,
-                                  2);
+                                  1);
     display_title_msg.center_x(ST7735_WIDTH / 2);
     display_info_msg.center_x(ST7735_WIDTH / 2);
     display_info_msg.center_y(ST7735_HEIGHT / 2);
@@ -110,7 +110,7 @@ std::string tm_to_string(const tm &timeinfo)
     if (timeinfo.tm_year == 0 - 1900)
         strftime(buffer, sizeof(buffer), "%d.%m\n%H:%M:%S", &timeinfo);
     else
-        strftime(buffer, sizeof(buffer), "%d.%m.%Y\n%H:%M:%S", &timeinfo);
+        strftime(buffer, sizeof(buffer), "%d.%m.%y\n%H:%M:%S", &timeinfo);
     return std::string(buffer);
 }
 
@@ -175,7 +175,7 @@ int main()
     {
         // printf("%s", html_content);
         tm current_time;
-        ap_mode(current_time, settings, display);
+        // ap_mode(current_time, settings, display);
         setDS3231Time(&current_time);
     }
 
@@ -217,12 +217,12 @@ int main()
         if (mode == MODE_CLOCK)
         {
             display_time = current_time;
-            display.draw_text(5, 5, ("Clock:\n\n" + tm_to_string(display_time)), ST7735_WHITE, 2);
+            display.draw_text(5, 5, ("Clock:\n" + tm_to_string(display_time)), ST7735_WHITE, 1);
         }
         else if (mode == MODE_COUNTER)
         {
             display_time = calculate_time_dif(start_time, current_time);
-            display.draw_text(5, 5, ("Start:\n\n" + tm_to_string(display_time)), ST7735_WHITE, 2);
+            display.draw_text(5, 5, ("Start:\n" + tm_to_string(display_time)), ST7735_WHITE, 1);
         }
         else if (mode == MODE_BIRTHDAY)
         {
@@ -231,7 +231,7 @@ int main()
                 birthday_time.tm_year += 1;
 
             display_time = calculate_time_dif(current_time, birthday_time);
-            display.draw_text(5, 5, ("Birthday:\n\n" + tm_to_string(display_time)), ST7735_WHITE, 2);
+            display.draw_text(5, 5, ("Birthday:\n" + tm_to_string(display_time)), ST7735_WHITE, 1);
         }
         uint32_t miliseconds = 0; //(to_ms_since_boot(get_absolute_time()) - to_ms_since_boot(boot_time)) % 1000;
         float total_secs = display_time.tm_sec + miliseconds / 1000.0f;
@@ -262,3 +262,26 @@ int main()
     }
     return 0;
 }
+
+// int main()
+// {
+//     init_all();
+//     sleep_ms(1000);
+//     ST7735 display(ST7735_SPI_PORT, ST7735_SPI_BAUDRATE, ST7735_PIN_SCK, ST7735_PIN_MOSI, ST7735_PIN_CS, ST7735_PIN_DC, ST7735_PIN_RST);
+//     display.init_red();
+//     GraphicsText msg(0, 0, "0", 1);
+//     msg.center_x(ST7735_WIDTH / 2);
+//     msg.center_y(ST7735_HEIGHT / 2);
+//     auto box = msg.get_rect();
+//     printf("(%d, %d)\n", msg.center_x(), msg.center_y());
+//     printf("(%d, %d)\n", box.right() - box.left(), msg.bottom() - msg.top());
+//     display.fill(ST7735_BLUE);
+//     msg.get_rect().draw(display, ST7735_BLACK);
+//     display.draw_char(msg.left(), msg.top(), '0', ST7735_WHITE, 1);
+//     // msg.draw(display, ST7735_WHITE);
+//     display.update();
+//     while (1)
+//     {
+//     }
+//     return 0;
+// }

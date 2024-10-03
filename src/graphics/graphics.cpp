@@ -67,7 +67,7 @@ static int get_string_width(const std::string &string, uint8_t scale)
         }
     }
     max_length = current_length > max_length ? current_length : max_length;
-    return (max_length * scale * (sizeof(font5x7[0]) + 1) - scale);
+    return max_length * scale * (FONT_CHAR_WIDTH + 1) - scale;
 }
 static int get_string_height(const std::string &string, uint8_t scale)
 {
@@ -79,7 +79,7 @@ static int get_string_height(const std::string &string, uint8_t scale)
             num_of_lines++;
         }
     }
-    return num_of_lines * scale * 8;
+    return num_of_lines * scale * (FONT_CHAR_HEIGHT + 1) - scale;
 }
 
 GraphicsRect::GraphicsRect(int x, int y, int width, int height) : m_x(x), m_y(y), m_width(width), m_height(height)

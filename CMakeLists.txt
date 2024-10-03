@@ -33,10 +33,16 @@ project(ClockEvent-C C CXX ASM)
 # Initialise the Raspberry Pi Pico SDK
 pico_sdk_init()
 
-# Run python html-to-c script
+# Run python scripts
 message("Running create_html python script")
 execute_process(COMMAND
-    py src/create_html.py
+    py src/python_scripts/create_html.py
+    WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+)
+
+message("Running create_font python script")
+execute_process(COMMAND
+    py src/python_scripts/create_font.py
     WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
 )
 

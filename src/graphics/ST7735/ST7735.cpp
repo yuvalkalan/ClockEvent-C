@@ -203,40 +203,40 @@ void ST7735::init_red()
 }
 void ST7735::draw_char(uint8_t x, uint8_t y, char c, uint16_t color, uint8_t scale)
 {
-    // draw char without backgound color
-    if (c < 32 || c > sizeof(font5x7) / sizeof(font5x7[0]) - 1 + 32)
-        return; // Only print characters in our font range
+    // Ensure the character is within the bounds of the font array
+    if (c < 32 || c > 126)
+        return; // ASCII range check
 
-    const uint8_t *bitmap = font5x7[c - 32]; // Get font bitmap for character
-
-    for (int i = 0; i < 5; i++) // 5 columns per character
-    {
-        uint8_t line = bitmap[i];
-        for (int j = 0; j < 7; j++) // 7 rows per column
-        {
-            if (line & 0x1)
+    const uint16_t *bitmap = font_bitmap[c - 32]; // Get the bitmap for the character
+    for (int i = 0; i < FONT_CHAR_HEIGHT; i++)
+    { // Loop through the height of the character
+        uint16_t row = bitmap[i];
+        for (int j = 0; j < FONT_CHAR_WIDTH; j++)
+        { // Loop through the width of the character
+            if (row & (1 << j))
+            {
+                // printf("X");
                 for (uint8_t sx = 0; sx < scale; sx++) // Draw scaled pixel
                     for (uint8_t sy = 0; sy < scale; sy++)
-                        draw_pixel(x + (i * scale) + sx, y + (j * scale) + sy, color);
-            line >>= 1; // Shift the line to get the next bit
+                        draw_pixel(x + (j * scale) + sx, y + (i * scale) + sy, color);
+            }
         }
     }
 }
 void ST7735::draw_text(uint8_t x, uint8_t y, const std::string &text, uint16_t color, uint8_t scale)
 {
-    int counter = 0;
     uint8_t ori_x = x;
     for (size_t i = 0; i < text.length(); i++)
     {
         if (text[i] == '\n')
         {
             x = ori_x;
-            y += 8 * scale;
+            y += (FONT_CHAR_HEIGHT + 1) * scale;
         }
         else
         {
             draw_char(x, y, text[i], color, scale);
-            x += 6 * scale; // Move x cursor, 5 pixels for the character + 1 pixel space
+            x += (FONT_CHAR_WIDTH + 1) * scale; // Move x cursor, 5 pixels for the character + 1 pixel space
         }
     }
 }
