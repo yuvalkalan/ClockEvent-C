@@ -72,7 +72,7 @@ void ap_mode(tm &current_time, Settings &settings, ST7735 &display)
     }
     display.fill(ST7735_BLACK);
     state->complete = false;
-    GraphicsText display_title_msg(0, 8, "AP mode!", 1);
+    GraphicsText display_title_msg(0, 0, "AP mode!", 1);
     GraphicsText display_info_msg(0, 0,
                                   std::string("Name:\n") + AP_WIFI_NAME + std::string("\n\nPassword:\n") + AP_WIFI_PASSWORD,
                                   1);
@@ -175,16 +175,11 @@ int main()
     {
         // printf("%s", html_content);
         tm current_time;
-        // ap_mode(current_time, settings, display);
+        ap_mode(current_time, settings, display);
         setDS3231Time(&current_time);
     }
 
     copy_DS3231_time();
-    // int current_sec = get_rtc_time().tm_sec;
-    // while (get_rtc_time().tm_sec == current_sec)
-    //     ;
-    // absolute_time_t boot_time = get_absolute_time();
-
     tm start_time = settings.get_start_time();
     tm birthday_time = settings.get_birthday_time();
     printf("settings are:\nstart time: %s\nbirthday time: %s\n", tm_to_string(start_time).c_str(), tm_to_string(birthday_time).c_str());
@@ -233,7 +228,7 @@ int main()
             display_time = calculate_time_dif(current_time, birthday_time);
             display.draw_text(5, 5, ("Birthday:\n" + tm_to_string(display_time)), ST7735_WHITE, 1);
         }
-        uint32_t miliseconds = 0; //(to_ms_since_boot(get_absolute_time()) - to_ms_since_boot(boot_time)) % 1000;
+        uint32_t miliseconds = 0;
         float total_secs = display_time.tm_sec + miliseconds / 1000.0f;
         float total_mins = display_time.tm_min + total_secs / 60;
         float total_hours = display_time.tm_hour + total_mins / 60;
@@ -247,18 +242,18 @@ int main()
         display.update();
         display.fill(ST7735_BLACK);
 
-        // frames += 1;
-        // auto currentTime = std::chrono::high_resolution_clock::now();
-        // std::chrono::duration<float> deltaTime = currentTime - lastTime;
-        // // Update FPS every second
-        // if (deltaTime.count() >= 1.0f)
-        // {
-        //     float fps = frames / deltaTime.count(); // Calculate FPS
-        //     frames = 0;                             // Reset frame count
-        //     lastTime = currentTime;                 // Reset time
-        //     // Output FPS
-        //     printf("fps: %f\n", fps);
-        // }
+        frames += 1;
+        auto currentTime = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<float> deltaTime = currentTime - lastTime;
+        // Update FPS every second
+        if (deltaTime.count() >= 1.0f)
+        {
+            float fps = frames / deltaTime.count(); // Calculate FPS
+            frames = 0;                             // Reset frame count
+            lastTime = currentTime;                 // Reset time
+            // Output FPS
+            printf("fps: %f\n", fps);
+        }
     }
     return 0;
 }

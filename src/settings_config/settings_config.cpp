@@ -19,14 +19,14 @@ static bool confirm_settings_reset(ST7735 &display, Rotary &rotary)
 {
     bool confirmed = false;
     bool finished = false;
-    GraphicsText reset_msg(0, 8, "reset\nsettings?", 2);
+    GraphicsText reset_msg(0, 8, "reset\nsettings?", 1);
     reset_msg.center_x(ST7735_WIDTH / 2);
 
-    GraphicsText yes_msg(0, 0, "yes", 2);
+    GraphicsText yes_msg(0, 0, "yes", 1);
     yes_msg.center_x(ST7735_WIDTH / 4);
     yes_msg.center_y(ST7735_HEIGHT / 2);
 
-    GraphicsText no_msg(0, 0, "no", 2);
+    GraphicsText no_msg(0, 0, "no", 1);
     no_msg.center_x(ST7735_WIDTH / 4 * 3);
     no_msg.center_y(ST7735_HEIGHT / 2);
     while (!finished)
@@ -49,18 +49,18 @@ static uint8_t confirm_save_changes(ST7735 &display, Rotary &rotary, Settings &s
 {
     uint8_t exit_status = SETTINGS_CONFIG_SAVE_TRUE;
     bool finished = false;
-    GraphicsText title_msg(0, 8, "Save\nChanges?", 2);
+    GraphicsText title_msg(0, 8, "Save\nChanges?", 1);
     title_msg.center_x(ST7735_WIDTH / 2);
 
-    GraphicsText yes_msg(0, 0, "yes", 2);
+    GraphicsText yes_msg(0, 0, "yes", 1);
     yes_msg.center_x(ST7735_WIDTH / 4);
     yes_msg.center_y(ST7735_HEIGHT / 2);
 
-    GraphicsText no_msg(0, 0, "no", 2);
+    GraphicsText no_msg(0, 0, "no", 1);
     no_msg.center_x(ST7735_WIDTH / 4 * 3);
     no_msg.center_y(ST7735_HEIGHT / 2);
 
-    GraphicsText cancel_msg(0, 0, "cancel", 2);
+    GraphicsText cancel_msg(0, 0, "cancel", 1);
     cancel_msg.center_x(ST7735_WIDTH / 2);
     cancel_msg.top(no_msg.bottom() + 16);
 
@@ -137,15 +137,15 @@ static bool settings_config_date(ST7735 &display, Rotary &rotary, Settings &sett
     Date date(current_date.tm_year + 1900, current_date.tm_mon + 1, current_date.tm_mday);
     std::string date_string = date.to_string();
     // get size and position of date string
-    GraphicsRect box = GraphicsText(0, 0, date_string, 2).get_rect();
+    GraphicsRect box = GraphicsText(0, 0, date_string, 1).get_rect();
     box.center_x(ST7735_WIDTH / 2);
     box.center_y(ST7735_HEIGHT / 2);
     // create visual data
-    GraphicsText day_substring(box.left(), box.top(), date_string.substr(0, 2), 2);                             // dd
-    GraphicsText dot1_substring(day_substring.right() + 2, day_substring.top(), ".", 2);                        //.
-    GraphicsText mon_substring(dot1_substring.right() + 2, dot1_substring.top(), date_string.substr(3, 2), 2);  // mm
-    GraphicsText dot2_substring(mon_substring.right() + 2, mon_substring.top(), ".", 2);                        //.
-    GraphicsText year_substring(dot2_substring.right() + 2, dot2_substring.top(), date_string.substr(6, 4), 2); // yyyy
+    GraphicsText day_substring(box.left(), box.top(), date_string.substr(0, 2), 1);                             // dd
+    GraphicsText dot1_substring(day_substring.right() + 2, day_substring.top(), ".", 1);                        //.
+    GraphicsText mon_substring(dot1_substring.right() + 2, dot1_substring.top(), date_string.substr(3, 2), 1);  // mm
+    GraphicsText dot2_substring(mon_substring.right() + 2, mon_substring.top(), ".", 1);                        //.
+    GraphicsText year_substring(dot2_substring.right() + 2, dot2_substring.top(), date_string.substr(6, 4), 1); // yyyy
 
     int current_select = SETTINGS_CONFIG_DAYS;
     const int date_length = 3; // day, month and year
@@ -177,9 +177,9 @@ static bool settings_config_date(ST7735 &display, Rotary &rotary, Settings &sett
                 date.set_day(ROUND_MOD(date.get_day() - 1, 0, date.month_days()));   // 0 - month_days()
             }
             date_string = date.to_string();
-            day_substring = GraphicsText(box.left(), box.top(), date_string.substr(0, 2), 2);
-            mon_substring = GraphicsText(dot1_substring.right() + 2, dot1_substring.top(), date_string.substr(3, 2), 2);
-            year_substring = GraphicsText(dot2_substring.right() + 2, dot2_substring.top(), date_string.substr(6, 4), 2);
+            day_substring = GraphicsText(box.left(), box.top(), date_string.substr(0, 2), 1);
+            mon_substring = GraphicsText(dot1_substring.right() + 2, dot1_substring.top(), date_string.substr(3, 2), 1);
+            year_substring = GraphicsText(dot2_substring.right() + 2, dot2_substring.top(), date_string.substr(6, 4), 1);
         }
         if (rotary.btn.clicked())
         {
@@ -222,15 +222,15 @@ static bool settings_config_time(ST7735 &display, Rotary &rotary, Settings &sett
     auto start_chrono_clock = std::chrono::steady_clock::now();
     std::string time_string = time.to_string();
     // get size and position of date string
-    GraphicsRect box = GraphicsText(0, 0, time_string, 2).get_rect();
+    GraphicsRect box = GraphicsText(0, 0, time_string, 1).get_rect();
     box.center_x(ST7735_WIDTH / 2);
     box.center_y(ST7735_HEIGHT / 2);
     // create visual data
-    GraphicsText hour_substring(box.left(), box.top(), time_string.substr(0, 2), 2);                           // hh
-    GraphicsText dot1_substring(hour_substring.right() + 2, hour_substring.top(), ":", 2);                     //:
-    GraphicsText min_substring(dot1_substring.right() + 2, dot1_substring.top(), time_string.substr(3, 2), 2); // mm
-    GraphicsText dot2_substring(min_substring.right() + 2, min_substring.top(), ":", 2);                       //:
-    GraphicsText sec_substring(dot2_substring.right() + 2, dot2_substring.top(), time_string.substr(6, 2), 2); // ss
+    GraphicsText hour_substring(box.left(), box.top(), time_string.substr(0, 2), 1);                           // hh
+    GraphicsText dot1_substring(hour_substring.right() + 2, hour_substring.top(), ":", 1);                     //:
+    GraphicsText min_substring(dot1_substring.right() + 2, dot1_substring.top(), time_string.substr(3, 2), 1); // mm
+    GraphicsText dot2_substring(min_substring.right() + 2, min_substring.top(), ":", 1);                       //:
+    GraphicsText sec_substring(dot2_substring.right() + 2, dot2_substring.top(), time_string.substr(6, 2), 1); // ss
 
     int current_select = SETTINGS_CONFIG_HOURS;
     const int time_length = 3; // hours, minutes and seconds
@@ -280,9 +280,9 @@ static bool settings_config_time(ST7735 &display, Rotary &rotary, Settings &sett
             start_chrono_clock = current_time;
         }
         time_string = time.to_string();
-        hour_substring = GraphicsText(box.left(), box.top(), time_string.substr(0, 2), 2);                           // hh
-        min_substring = GraphicsText(dot1_substring.right() + 2, dot1_substring.top(), time_string.substr(3, 2), 2); // mm
-        sec_substring = GraphicsText(dot2_substring.right() + 2, dot2_substring.top(), time_string.substr(6, 2), 2); // ss
+        hour_substring = GraphicsText(box.left(), box.top(), time_string.substr(0, 2), 1);                           // hh
+        min_substring = GraphicsText(dot1_substring.right() + 2, dot1_substring.top(), time_string.substr(3, 2), 1); // mm
+        sec_substring = GraphicsText(dot2_substring.right() + 2, dot2_substring.top(), time_string.substr(6, 2), 1); // ss
 
         hour_substring.draw(display, current_select == SETTINGS_CONFIG_DAYS && !toggle_current ? ST7735_BLACK : ST7735_WHITE);
         dot1_substring.draw(display, ST7735_WHITE);
@@ -307,9 +307,9 @@ static bool settings_config_datetime(ST7735 &display, Rotary &rotary, Settings &
 {
     int length = 0;
     ConfigHeader msgs[] = {
-        {length++, GraphicsText(0, 0, "Date", 2), settings_config_date},
-        {length++, GraphicsText(0, 0, "Time", 2), settings_config_time},
-        {length++, GraphicsText(0, 0, "Exit", 2), settings_config_exit},
+        {length++, GraphicsText(0, 0, "Date", 1), settings_config_date},
+        {length++, GraphicsText(0, 0, "Time", 1), settings_config_time},
+        {length++, GraphicsText(0, 0, "Exit", 1), settings_config_exit},
     };
     for (size_t i = 0; i < length; i++)
     {
@@ -336,10 +336,10 @@ void settings_config_main(ST7735 &display, Rotary &rotary, Settings &settings)
 {
     int length = 0;
     ConfigHeader msgs[] = {
-        {length++, GraphicsText(0, 0, "Date/Time", 2), settings_config_datetime},
-        {length++, GraphicsText(0, 0, "Clocks", 2), settings_config_clocks},
-        {length++, GraphicsText(0, 0, "Reset", 2), settings_config_reset},
-        {length++, GraphicsText(0, 0, "Exit", 2), settings_config_exit},
+        {length++, GraphicsText(0, 0, "Date/Time", 1), settings_config_datetime},
+        {length++, GraphicsText(0, 0, "Clocks", 1), settings_config_clocks},
+        {length++, GraphicsText(0, 0, "Reset", 1), settings_config_reset},
+        {length++, GraphicsText(0, 0, "Exit", 1), settings_config_exit},
     };
     for (size_t i = 0; i < length; i++)
     {
