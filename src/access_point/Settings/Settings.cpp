@@ -1,14 +1,79 @@
 #include "Settings.h"
+
 #if LIB_PICO_STDIO_USB
-void enable_usb(bool enable)
+static void enable_usb(bool enable)
 {
     stdio_set_driver_enabled(&stdio_usb, enable);
 }
 #else
 void enable_usb(bool enable) {}
 #endif
+Clock::Clock() : m_exist(0), m_type(0), m_title(""), m_timestamp() {}
+Clock::Clock(uint8_t type, const char title[10], tm timestamp) : m_exist(true), m_type(type), m_title(title), m_timestamp(timestamp) {}
+Clock::Clock(const Clock &other) : m_exist(other.m_exist), m_type(other.m_type), m_title(other.m_title), m_timestamp(other.m_timestamp) {}
+bool Clock::exist() const
+{
+    return m_exist;
+}
+uint8_t Clock::get_type() const
+{
+    return m_type;
+}
+const std::string &Clock::get_title() const
+{
+    return m_title;
+}
+tm Clock::get_timestamp() const
+{
+    return m_timestamp;
+}
 
-Settings::Settings() : m_current_time(), m_start_time(), m_birthday_time()
+tm Clock::calculate(tm current_time) const
+{
+    if (m_type == SETTINGS_CLOCK_TYPE_RAW)
+    {
+        return current_time;
+    }
+    else if (m_type == SETTINGS_CLOCK_TYPE_FROM)
+    {
+        return calculate_time_dif(m_timestamp, current_time);
+    }
+    else if (m_type == SETTINGS_CLOCK_TYPE_TO)
+    {
+        return calculate_time_dif(current_time, m_timestamp);
+    }
+    else if (m_type == SETTINGS_CLOCK_TYPE_TO_REPEAT_Y)
+    {
+        tm to_return = get_timestamp();
+        to_return.tm_year = current_time.tm_year;
+        if (tm_is_bigger(current_time, to_return))
+            to_return.tm_year++;
+        return calculate_time_dif(current_time, to_return);
+    }
+    else if (m_type == SETTINGS_CLOCK_TYPE_TO_REPEAT_M)
+    {
+        tm to_return = get_timestamp();
+        to_return.tm_year = current_time.tm_year;
+        to_return.tm_mon = current_time.tm_mon;
+        if (tm_is_bigger(current_time, to_return))
+            to_return.tm_mon++;
+        return calculate_time_dif(current_time, to_return);
+    }
+    else if (m_type == SETTINGS_CLOCK_TYPE_TO_REPEAT_D)
+    {
+        tm to_return = get_timestamp();
+        to_return.tm_year = current_time.tm_year;
+        to_return.tm_mon = current_time.tm_mon;
+        to_return.tm_mday = current_time.tm_mday;
+        if (tm_is_bigger(current_time, to_return))
+            to_return.tm_mday++;
+        return calculate_time_dif(current_time, to_return);
+    }
+    // this should not reach here!!
+    return tm();
+}
+
+Settings::Settings() : m_clocks()
 {
     if (exist())
     {
@@ -22,18 +87,36 @@ Settings::Settings() : m_current_time(), m_start_time(), m_birthday_time()
 }
 void Settings::read()
 {
-    memcpy(&m_current_time, settings_flash_buffer + SETTINGS_CURRENT_TIME_OFFSET, sizeof(m_current_time));
-    memcpy(&m_start_time, settings_flash_buffer + SETTINGS_START_TIME_OFFSET, sizeof(m_start_time));
-    memcpy(&m_birthday_time, settings_flash_buffer + SETTINGS_BIRTHDAY_TIME_OFFSET, sizeof(m_birthday_time));
+    for (int i = 0; i < SETTINGS_MAX_CLOCKS; i++)
+    {
+        const uint8_t *clock_offset = settings_flash_buffer + SETTINGS_CLOCKS_ARRAY_OFFSET + i * SETTINGS_CLOCK_SIZE;
+        if (*(clock_offset + SETTINGS_CLOCK_EXIST_OFFSET) == 1)
+        {
+            uint8_t type = *(clock_offset + SETTINGS_CLOCK_TYPE_OFFSET);
+            char title[SETTINGS_CLOCK_TITLE_LENGTH];
+            memcpy(title, clock_offset + SETTINGS_CLOCK_TITLE_OFFSET, SETTINGS_CLOCK_TITLE_LENGTH);
+            tm time;
+            memcpy(&time, clock_offset + SETTINGS_CLOCK_TM_OFFSET, sizeof(tm));
+            m_clocks[i] = Clock(type, title, time);
+        }
+    }
 }
 void Settings::write()
 {
     // create page --------------------
     uint8_t data[FLASH_PAGE_SIZE];
     data[SETTINGS_EXIST_OFFSET] = 1;
-    memcpy(data + SETTINGS_CURRENT_TIME_OFFSET, &m_current_time, sizeof(m_current_time));
-    memcpy(data + SETTINGS_START_TIME_OFFSET, &m_start_time, sizeof(m_start_time));
-    memcpy(data + SETTINGS_BIRTHDAY_TIME_OFFSET, &m_birthday_time, sizeof(m_birthday_time));
+    uint8_t clock_arr[SETTINGS_MAX_CLOCKS][SETTINGS_CLOCK_SIZE];
+    for (int i = 0; i < SETTINGS_MAX_CLOCKS; i++)
+    {
+        clock_arr[i][SETTINGS_CLOCK_EXIST_OFFSET] = m_clocks[i].exist();
+        clock_arr[i][SETTINGS_CLOCK_TYPE_OFFSET] = m_clocks[i].get_type();
+        const char *title = m_clocks[i].get_title().c_str();
+        memcpy(clock_arr[i] + SETTINGS_CLOCK_TITLE_OFFSET, title, SETTINGS_CLOCK_TITLE_LENGTH);
+        tm time = m_clocks[i].get_timestamp();
+        memcpy(clock_arr[i] + SETTINGS_CLOCK_TM_OFFSET, &time, sizeof(time));
+    }
+    memcpy(data + SETTINGS_CLOCKS_ARRAY_OFFSET, &clock_arr, SETTINGS_MAX_CLOCKS * SETTINGS_CLOCK_SIZE);
     // --------------------------------
     // copy page to flash -------------
     enable_usb(false);
@@ -57,35 +140,17 @@ void Settings::reset()
     flash_range_erase(SETTINGS_WRITE_START, FLASH_SECTOR_SIZE);
     restore_interrupts(ints);
     enable_usb(true);
-    m_current_time = tm();
-    m_start_time = tm();
-    m_birthday_time = tm();
+    for (int i = 0; i < SETTINGS_MAX_CLOCKS; i++)
+    {
+        m_clocks[i] = Clock();
+    }
 }
-tm Settings::get_current_time() const
+const Clock &Settings::get_clock(uint8_t index) const
 {
-    return m_current_time;
+    return m_clocks[index];
 }
-tm Settings::get_start_time() const
+void Settings::set_clock(const Clock &clock, uint8_t index)
 {
-    return m_start_time;
-}
-tm Settings::get_birthday_time() const
-{
-    return m_birthday_time;
-}
-
-void Settings::set_current_time(const tm &timestamp)
-{
-    m_current_time = timestamp;
-    write();
-}
-void Settings::set_start_time(const tm &timestamp)
-{
-    m_start_time = timestamp;
-    write();
-}
-void Settings::set_birthday_time(const tm &timestamp)
-{
-    m_birthday_time = timestamp;
+    m_clocks[index] = Clock(clock); // call the copy constractor
     write();
 }

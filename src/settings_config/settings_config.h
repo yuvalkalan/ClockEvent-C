@@ -5,7 +5,6 @@
 #include "../graphics/graphics.h"
 #include "../Rotary/Rotary.h"
 #include "../access_point/Settings/Settings.h"
-#include "../TimeMaster/TimeMaster.h"
 #include "../DS3231/DS3231.h"
 
 #define SETTINGS_CONFIG_SELECTED_COLOR 0x1082

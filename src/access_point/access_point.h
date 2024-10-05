@@ -36,10 +36,6 @@
 // http req params --------------------
 #define PARAM_CURRENT_DATE "currentDate"
 #define PARAM_CURRENT_TIME "currentTime"
-#define PARAM_START_DATE "startDate"
-#define PARAM_START_TIME "startTime"
-#define PARAM_BIRTHDAY_DATE "birthdayDate"
-#define PARAM_BIRTHDAY_TIME "birthdayTime"
 // ------------------------------------
 
 struct TCPServer
@@ -48,6 +44,7 @@ struct TCPServer
     bool complete;
     ip_addr_t gw;
     Settings *settings;
+    tm *current_time;
 };
 struct TCPConnect
 {
@@ -59,15 +56,9 @@ struct TCPConnect
     int result_len;
     ip_addr_t *gw;
     Settings *settings;
+    tm *current_time;
 };
 
-static err_t tcp_close_client_connection(TCPConnect *con_state, tcp_pcb *client_pcb, err_t close_err);
 void tcp_server_close(TCPServer *state);
-static err_t tcp_server_sent(void *arg, tcp_pcb *pcb, u16_t len);
-static std::map<std::string, std::string> extract_params(const std::string &params);
-static int handle_http(const char *request, const char *params, char *result, size_t max_result_len, Settings &settings);
 err_t tcp_server_recv(void *arg, tcp_pcb *pcb, pbuf *p, err_t err);
-static err_t tcp_server_poll(void *arg, tcp_pcb *pcb);
-static void tcp_server_err(void *arg, err_t err);
-static err_t tcp_server_accept(void *arg, tcp_pcb *client_pcb, err_t err);
 bool tcp_server_open(void *arg, const char *ap_name);

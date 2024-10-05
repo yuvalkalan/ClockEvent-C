@@ -59,7 +59,7 @@ add_executable(${PROJECT_NAME}
     src/graphics/graphics.cpp
     src/Rotary/Rotary.cpp
     src/Rotary/Button/Button.cpp
-    src/TimeMaster/TimeMaster.cpp
+    src/access_point/Settings/TimeMaster/TimeMaster.cpp
     src/settings_config/settings_config.cpp
 )
 

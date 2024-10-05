@@ -12,13 +12,6 @@
 #define ROTARY_PIN_OUT_A 13
 #define ROTARY_PIN_OUT_B 7
 // ------------------------------------
-// display modes ----------------------
-#define MODE_SLEEP -1
-#define MODE_CLOCK 0
-#define MODE_COUNTER 1
-#define MODE_BIRTHDAY 2
-#define MUN_OF_MODES 3
-// ------------------------------------
 
 void add_grid(ST7735 &display)
 {
@@ -65,6 +58,7 @@ void ap_mode(tm &current_time, Settings &settings, ST7735 &display)
     dns_server_init(&dns_server, &state->gw);
 
     state->settings = &settings;
+    state->current_time = &current_time;
 
     if (!tcp_server_open(state, ap_name))
     {
@@ -96,7 +90,6 @@ void ap_mode(tm &current_time, Settings &settings, ST7735 &display)
         sleep_ms(1000);
     }
     display.fill(ST7735_BLACK);
-    current_time = settings.get_current_time();
     tcp_server_close(state);
     dns_server_deinit(&dns_server);
     dhcp_server_deinit(&dhcp_server);
@@ -131,33 +124,6 @@ static int init_all()
     return 0;
 }
 
-bool inline tm_is_bigger(const tm &time1, const tm &time2)
-{
-    if (time1.tm_year == time2.tm_year)
-    {
-        if (time1.tm_mon == time2.tm_mon)
-        {
-            if (time1.tm_mday == time2.tm_mday)
-            {
-                if (time1.tm_hour == time2.tm_hour)
-                {
-                    if (time1.tm_min == time2.tm_min)
-                    {
-                        if (time1.tm_sec == time2.tm_sec)
-                            return false;
-                        return time1.tm_sec > time2.tm_sec;
-                    }
-                    return time1.tm_min > time2.tm_min;
-                }
-                return time1.tm_hour > time2.tm_hour;
-            }
-            return time1.tm_mday > time2.tm_mday;
-        }
-        return time1.tm_mon > time2.tm_mon;
-    }
-    return time1.tm_year > time2.tm_year;
-}
-
 int main()
 {
     int error = init_all();
@@ -180,11 +146,21 @@ int main()
     }
 
     copy_DS3231_time();
-    tm start_time = settings.get_start_time();
-    tm birthday_time = settings.get_birthday_time();
-    printf("settings are:\nstart time: %s\nbirthday time: %s\n", tm_to_string(start_time).c_str(), tm_to_string(birthday_time).c_str());
-    tm display_time;
-    int mode = MODE_CLOCK;
+    Clock clocks[1 + SETTINGS_MAX_CLOCKS]; // add one for real clock
+    clocks[0] = Clock(SETTINGS_CLOCK_TYPE_RAW, "Clock", get_rtc_time());
+    int clocks_length = 1; // start with one to count real clock
+    for (int i = 0; i < SETTINGS_MAX_CLOCKS; i++)
+    {
+        if (settings.get_clock(i).exist())
+            clocks[clocks_length++] = settings.get_clock(i);
+    }
+    for (size_t i = 0; i < clocks_length; i++)
+    {
+        Clock &clock = clocks[i];
+        printf("clock:\n%d,%s,%s\n", clock.get_type(), clock.get_title().c_str(), tm_to_string(clock.get_timestamp()));
+    }
+
+    int clock_index = 0;
     uint8_t clock_cx = ST7735_WIDTH / 2, clock_radius = (ST7735_WIDTH > ST7735_HEIGHT ? ST7735_HEIGHT : ST7735_WIDTH) / 4, clock_cy = ST7735_HEIGHT - clock_radius - 10;
     int frames = 0;
     auto lastTime = std::chrono::high_resolution_clock::now();
@@ -194,40 +170,18 @@ int main()
         int spins = rotary.get_spin();
         if (spins)
         {
-            mode = ROUND_MOD(mode, spins, MUN_OF_MODES);
-        }
-        if (rotary.btn.clicked())
-        {
-            mode = mode == MODE_SLEEP ? MODE_CLOCK : MODE_SLEEP;
-            display.fill(ST7735_BLACK);
-            display.update();
+            clock_index = ROUND_MOD(clock_index, spins, clocks_length);
         }
         if (rotary.btn.hold_down())
         {
             settings_config_main(display, rotary, settings);
         }
-        tm current_time = get_rtc_time();
-        if (mode == MODE_SLEEP)
-            continue;
-        if (mode == MODE_CLOCK)
-        {
-            display_time = current_time;
-            display.draw_text(5, 5, ("Clock:\n" + tm_to_string(display_time)), ST7735_WHITE, 1);
-        }
-        else if (mode == MODE_COUNTER)
-        {
-            display_time = calculate_time_dif(start_time, current_time);
-            display.draw_text(5, 5, ("Start:\n" + tm_to_string(display_time)), ST7735_WHITE, 1);
-        }
-        else if (mode == MODE_BIRTHDAY)
-        {
-            birthday_time.tm_year = current_time.tm_year;
-            if (tm_is_bigger(current_time, birthday_time))
-                birthday_time.tm_year += 1;
 
-            display_time = calculate_time_dif(current_time, birthday_time);
-            display.draw_text(5, 5, ("Birthday:\n" + tm_to_string(display_time)), ST7735_WHITE, 1);
-        }
+        const Clock &current_clock = clocks[clock_index];
+        tm display_time = current_clock.calculate(get_rtc_time());
+        display.draw_text(5, 5, (current_clock.get_title() + "\n" + tm_to_string(display_time)), ST7735_WHITE, 1);
+
+        // display clock animation ----------------------------------
         uint32_t miliseconds = 0;
         float total_secs = display_time.tm_sec + miliseconds / 1000.0f;
         float total_mins = display_time.tm_min + total_secs / 60;
@@ -239,9 +193,12 @@ int main()
         display.draw_line_with_angle(clock_cx, clock_cy, clock_radius * 0.85f, sec_angle, 2, ST7735_WHITE);
         display.draw_line_with_angle(clock_cx, clock_cy, clock_radius * 0.70f, min_angle, 3, ST7735_RED);
         display.draw_line_with_angle(clock_cx, clock_cy, clock_radius * 0.50f, hour_angle, 4, ST7735_BLUE);
+        // ----------------------------------------------------------
+        // render screen --------------------------------------------
         display.update();
         display.fill(ST7735_BLACK);
-
+        // ----------------------------------------------------------
+        // calculate fps (for debugging) ----------------------------
         frames += 1;
         auto currentTime = std::chrono::high_resolution_clock::now();
         std::chrono::duration<float> deltaTime = currentTime - lastTime;
@@ -254,6 +211,7 @@ int main()
             // Output FPS
             printf("fps: %f\n", fps);
         }
+        // ----------------------------------------------------------
     }
     return 0;
 }
@@ -262,21 +220,26 @@ int main()
 // {
 //     init_all();
 //     sleep_ms(1000);
-//     ST7735 display(ST7735_SPI_PORT, ST7735_SPI_BAUDRATE, ST7735_PIN_SCK, ST7735_PIN_MOSI, ST7735_PIN_CS, ST7735_PIN_DC, ST7735_PIN_RST);
-//     display.init_red();
-//     GraphicsText msg(0, 0, "0", 1);
-//     msg.center_x(ST7735_WIDTH / 2);
-//     msg.center_y(ST7735_HEIGHT / 2);
-//     auto box = msg.get_rect();
-//     printf("(%d, %d)\n", msg.center_x(), msg.center_y());
-//     printf("(%d, %d)\n", box.right() - box.left(), msg.bottom() - msg.top());
-//     display.fill(ST7735_BLUE);
-//     msg.get_rect().draw(display, ST7735_BLACK);
-//     display.draw_char(msg.left(), msg.top(), '0', ST7735_WHITE, 1);
-//     // msg.draw(display, ST7735_WHITE);
-//     display.update();
-//     while (1)
+//     Settings settings;
+//     for (int i = 0; i < SETTINGS_MAX_CLOCKS; i++)
 //     {
+//         Clock c = settings.get_clock(i);
+//         printf("clock\texist: %d\ttitle: %s\ttime: [%s]\n", c.exist(), c.get_title().c_str(), tm_to_string(c.get_timestamp()).c_str());
 //     }
+//     printf("\n--------------------------------------------------\n");
+//     settings.reset();
+//     copy_DS3231_time();
+//     for (int i = 0; i < SETTINGS_MAX_CLOCKS; i++)
+//     {
+//         settings.set_clock(Clock(1, "1234567890", get_rtc_time()), i);
+//         sleep_ms(1000);
+//     }
+//     for (int i = 0; i < SETTINGS_MAX_CLOCKS; i++)
+//     {
+//         Clock c = settings.get_clock(i);
+//         printf("clock\texist: %d\ttitle: %s\ttime: [%s]\n", c.exist(), c.get_title().c_str(), tm_to_string(c.get_timestamp()).c_str());
+//     }
+//     while (1)
+//         ;
 //     return 0;
 // }

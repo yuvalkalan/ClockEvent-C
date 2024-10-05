@@ -1,6 +1,75 @@
 
 #include "access_point.h"
 
+static tm string_to_tm(const std::string &date_str, const std::string &time_str)
+{
+    // date_str format should be yyyy-mm-dd
+    // time_str format should be hh:mm:ss
+    tm timestamp = {};
+    std::string datetime_str = date_str + " " + time_str;
+    std::istringstream ss(datetime_str);
+    ss >> std::get_time(&timestamp, "%Y-%m-%d %H:%M:%S");
+    return timestamp;
+}
+// Function to parse query string and return a map of key-value pairs
+static std::map<std::string, std::string> extract_params(const std::string &params)
+{
+    std::map<std::string, std::string> params_map;
+    std::stringstream ss(params);
+    std::string token;
+
+    while (std::getline(ss, token, '&'))
+    {
+
+        size_t pos = token.find('=');
+
+        if (pos != std::string::npos)
+        {
+            std::string key = token.substr(0, pos);
+            std::string value = token.substr(pos + 1);
+            printf("key = %s, value = %s\n", key.c_str(), value.c_str());
+            params_map[key] = value;
+        }
+    }
+    return params_map;
+}
+
+static int handle_http(const char *request, const char *params, char *result, size_t max_result_len, Settings &settings, tm &current_time)
+{
+    // debug -----------------------
+    printf("request is <%s>\n", request);
+    printf("params is <%s>\n", params);
+    // -----------------------------
+    int len = 0;
+    // if the user refering the page
+    if (strncmp(request, PAGE_TITLE, sizeof(PAGE_TITLE) - 1) == 0)
+    {
+        // See if the user sent params
+        if (params)
+        {
+            // should change settings here!
+            printf("\ngot params!\n\n");
+            auto params_map = extract_params(params);
+            for (const auto &item : params_map)
+            {
+                printf("key = %s, value = %s\n", item.first.c_str(), item.second.c_str());
+                settings.set_clock(settings.get_clock(0), 0); // TODO: remove this and save real data to settings
+            }
+            current_time = string_to_tm(params_map[PARAM_CURRENT_DATE], params_map[PARAM_CURRENT_TIME]);
+            // settings.set_current_time(string_to_tm(params_map[PARAM_CURRENT_DATE], params_map[PARAM_CURRENT_TIME]));
+            // settings.set_start_time(string_to_tm(params_map[PARAM_START_DATE], params_map[PARAM_START_TIME]));
+            // settings.set_birthday_time(string_to_tm(params_map[PARAM_BIRTHDAY_DATE], params_map[PARAM_BIRTHDAY_TIME]));
+            // printf("current:\n\tdate is %s, time is %s\n", params_map[PARAM_CURRENT_DATE].c_str(), params_map[PARAM_CURRENT_TIME].c_str());
+            // printf("start:\n\tdate is %s, time is %s\n", params_map[PARAM_START_DATE].c_str(), params_map[PARAM_START_TIME].c_str());
+            // printf("birthday:\n\tdate is %s, time is %s\n", params_map[PARAM_BIRTHDAY_DATE].c_str(), params_map[PARAM_BIRTHDAY_TIME].c_str());
+        }
+        // Generate result
+        len = snprintf(result, max_result_len, html_content);
+    }
+    // printf("result is <%s>\n", result);
+    return len;
+}
+
 static err_t tcp_close_client_connection(TCPConnect *con_state, tcp_pcb *client_pcb, err_t close_err)
 {
     if (client_pcb)
@@ -46,28 +115,7 @@ static err_t tcp_server_sent(void *arg, tcp_pcb *pcb, u16_t len)
     }
     return ERR_OK;
 }
-// Function to parse query string and return a map of key-value pairs
-static std::map<std::string, std::string> extract_params(const std::string &params)
-{
-    std::map<std::string, std::string> params_map;
-    std::stringstream ss(params);
-    std::string token;
 
-    while (std::getline(ss, token, '&'))
-    {
-
-        size_t pos = token.find('=');
-
-        if (pos != std::string::npos)
-        {
-            std::string key = token.substr(0, pos);
-            std::string value = token.substr(pos + 1);
-            printf("key = %s, value = %s\n", key.c_str(), value.c_str());
-            params_map[key] = value;
-        }
-    }
-    return params_map;
-}
 err_t tcp_server_recv(void *arg, tcp_pcb *pcb, pbuf *p, err_t err)
 {
     TCPConnect *con_state = (TCPConnect *)arg;
@@ -107,7 +155,7 @@ err_t tcp_server_recv(void *arg, tcp_pcb *pcb, pbuf *p, err_t err)
             }
 
             // Generate content
-            con_state->result_len = handle_http(request, params, con_state->result, sizeof(con_state->result), *(con_state->settings));
+            con_state->result_len = handle_http(request, params, con_state->result, sizeof(con_state->result), *(con_state->settings), *(con_state->current_time));
             // printf("Request: %s?%s\n", request, params);
             // printf("Result: %d\n", con_state->result_len);
 
@@ -197,6 +245,7 @@ static err_t tcp_server_accept(void *arg, tcp_pcb *client_pcb, err_t err)
     con_state->pcb = client_pcb; // for checking
     con_state->gw = &state->gw;
     con_state->settings = state->settings;
+    con_state->current_time = state->current_time;
 
     // setup connection to client
     tcp_arg(client_pcb, con_state);
@@ -242,44 +291,4 @@ bool tcp_server_open(void *arg, const char *ap_name)
 
     printf("Try connecting to '%s' (press 'd' to disable access point)\n", ap_name);
     return true;
-}
-
-static tm string_to_tm(const std::string &date_str, const std::string &time_str)
-{
-    // date_str format should be yyyy-mm-dd
-    // time_str format should be hh:mm:ss
-    tm timestamp = {};
-    std::string datetime_str = date_str + " " + time_str;
-    std::istringstream ss(datetime_str);
-    ss >> std::get_time(&timestamp, "%Y-%m-%d %H:%M:%S");
-    return timestamp;
-}
-
-static int handle_http(const char *request, const char *params, char *result, size_t max_result_len, Settings &settings)
-{
-    // debug -----------------------
-    printf("request is <%s>\n", request);
-    printf("params is <%s>\n", params);
-    // -----------------------------
-    int len = 0;
-    // if the user refering the page
-    if (strncmp(request, PAGE_TITLE, sizeof(PAGE_TITLE) - 1) == 0)
-    {
-        // See if the user sent params
-        if (params)
-        {
-            printf("\ngot params!\n\n");
-            auto params_map = extract_params(params);
-            settings.set_current_time(string_to_tm(params_map[PARAM_CURRENT_DATE], params_map[PARAM_CURRENT_TIME]));
-            settings.set_start_time(string_to_tm(params_map[PARAM_START_DATE], params_map[PARAM_START_TIME]));
-            settings.set_birthday_time(string_to_tm(params_map[PARAM_BIRTHDAY_DATE], params_map[PARAM_BIRTHDAY_TIME]));
-            printf("current:\n\tdate is %s, time is %s\n", params_map[PARAM_CURRENT_DATE].c_str(), params_map[PARAM_CURRENT_TIME].c_str());
-            printf("start:\n\tdate is %s, time is %s\n", params_map[PARAM_START_DATE].c_str(), params_map[PARAM_START_TIME].c_str());
-            printf("birthday:\n\tdate is %s, time is %s\n", params_map[PARAM_BIRTHDAY_DATE].c_str(), params_map[PARAM_BIRTHDAY_TIME].c_str());
-        }
-        // Generate result
-        len = snprintf(result, max_result_len, html_content);
-    }
-    // printf("result is <%s>\n", result);
-    return len;
 }

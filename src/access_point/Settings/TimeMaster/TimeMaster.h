@@ -47,3 +47,4 @@ public:
 };
 
 tm calculate_time_dif(const tm &datetime1, const tm &datetime2);
+bool tm_is_bigger(const tm &time1, const tm &time2);

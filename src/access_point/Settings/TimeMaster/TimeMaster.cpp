@@ -236,3 +236,29 @@ tm calculate_time_dif(const tm &datetime1, const tm &datetime2)
     }
     return res;
 }
+bool tm_is_bigger(const tm &time1, const tm &time2)
+{
+    if (time1.tm_year == time2.tm_year)
+    {
+        if (time1.tm_mon == time2.tm_mon)
+        {
+            if (time1.tm_mday == time2.tm_mday)
+            {
+                if (time1.tm_hour == time2.tm_hour)
+                {
+                    if (time1.tm_min == time2.tm_min)
+                    {
+                        if (time1.tm_sec == time2.tm_sec)
+                            return false;
+                        return time1.tm_sec > time2.tm_sec;
+                    }
+                    return time1.tm_min > time2.tm_min;
+                }
+                return time1.tm_hour > time2.tm_hour;
+            }
+            return time1.tm_mday > time2.tm_mday;
+        }
+        return time1.tm_mon > time2.tm_mon;
+    }
+    return time1.tm_year > time2.tm_year;
+}
