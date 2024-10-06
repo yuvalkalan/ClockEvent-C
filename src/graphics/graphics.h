@@ -16,7 +16,7 @@ public:
     uint8_t get_blue() const;
     uint16_t fade(GraphicsColor &other, float precent) const;
     operator uint16_t() const;
-    static uint16_t makeColor(uint8_t r, uint8_t g, uint8_t b);
+    static uint16_t make_color(uint8_t r, uint8_t g, uint8_t b);
     // static GraphicsColor rgb24to16(uint32_t rgb24);
 };
 

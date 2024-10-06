@@ -15,6 +15,7 @@ void software_reset()
     while (1)
         ;
 }
+
 static void tm_add_sec(tm &time, int sec)
 {
     Time time_obj(time.tm_hour, time.tm_min, time.tm_sec);
@@ -156,6 +157,66 @@ static tm receive_datetime_from_user(ST7735 &display, Rotary &rotary, const tm &
     new_time.tm_year = date.get_year() - 1900;
     return new_time;
 }
+static std::string receive_string_from_user(ST7735 &display, Rotary &rotary, const std::string &start_string)
+{
+    std::string current_string(start_string);
+    const char char_map[] = " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; // space, a-z, A-Z, 0-9
+    int current_index = 0;                                                                     // index in char_map
+    const int map_length = sizeof(char_map) - 1;                                               // length of char_map
+    bool exit = false;
+    auto last_toggle_time = std::chrono::steady_clock::now();
+    bool toggle_current = true;
+    while (!exit)
+    {
+        // handle input
+        rotary.btn.update();
+        int spins = rotary.get_spin();
+        if (spins)
+        {
+            current_index = ROUND_MOD(current_index, spins, map_length); // return index in char_map
+        }
+        if (rotary.btn.clicked())
+        {
+            if (current_string.length() < SETTINGS_CLOCK_TITLE_LENGTH - 1)
+            {
+                current_string += char_map[current_index]; // add current to string
+                current_index = 0;                         // reset current
+            }
+        }
+        if (rotary.btn.double_clicked())
+        {
+            if (current_string.length())
+                current_string.pop_back(); // delete one charecter
+        }
+        if (rotary.btn.hold_down())
+            exit = true;
+        // handle toggle
+        auto current_time = std::chrono::steady_clock::now();
+        std::chrono::duration<double> delta = current_time - last_toggle_time;
+        if (delta.count() >= 0.5)
+        {
+            toggle_current = !toggle_current;
+            last_toggle_time = current_time; // Reset the last toggle time
+        }
+
+        // handle display
+        GraphicsText display_string(5, 0, current_string, 1);
+        display_string.center_y(ST7735_HEIGHT / 2);
+        GraphicsText display_current(display_string.right(), display_string.top(), std::string(1, char_map[current_index]), 1);
+        GraphicsText display_underscore(display_current.left(), display_current.top() + 1, std::string(1, '_'), 1);
+
+        display_string.draw(display, ST7735_WHITE);
+        if (current_string.length() < SETTINGS_CLOCK_TITLE_LENGTH - 1)
+        {
+            display_current.draw(display, GraphicsColor::make_color(255, 255, 255));
+            if (toggle_current)
+                display_underscore.draw(display, GraphicsColor::make_color(255, 255, 255));
+        } // update screen
+        display.update();
+        display.fill(ST7735_BLACK);
+    }
+    return current_string;
+}
 
 static bool confirm_settings_reset(ST7735 &display, Rotary &rotary)
 {
@@ -238,6 +299,9 @@ static void draw_settings_config_separator(ST7735 &display, uint8_t y)
 }
 static void display_settings_config(ST7735 &display, Rotary &rotary, Settings &settings, ConfigHeader *msgs, int msgs_length)
 {
+    /**
+     * @brief display settings page to display
+     */
     int current_select = 0;
     bool exit = false;
     // // check if display overflow screen
@@ -297,25 +361,11 @@ static bool settings_config_datetime(ST7735 &display, Rotary &rotary, Settings &
     {
 
         user_input_datetime = receive_datetime_from_user(display, rotary, user_input_datetime, true);
-        printf("user input %d, %d, %d, %d, %d, %d\n",
-               user_input_datetime.tm_year,
-               user_input_datetime.tm_mon,
-               user_input_datetime.tm_mday,
-               user_input_datetime.tm_hour,
-               user_input_datetime.tm_min,
-               user_input_datetime.tm_sec);
         auto start_time = std::chrono::steady_clock::now();
         exit_status = confirm_save_changes(display, rotary);
         auto end_time = std::chrono::steady_clock::now();
         std::chrono::duration<double> delta = end_time - start_time;
         tm_add_sec(user_input_datetime, delta.count());
-        printf("exit output %d, %d, %d, %d, %d, %d\n",
-               user_input_datetime.tm_year,
-               user_input_datetime.tm_mon,
-               user_input_datetime.tm_mday,
-               user_input_datetime.tm_hour,
-               user_input_datetime.tm_min,
-               user_input_datetime.tm_sec);
     }
     if (exit_status == SETTINGS_CONFIG_SAVE_TRUE)
     {
@@ -325,87 +375,23 @@ static bool settings_config_datetime(ST7735 &display, Rotary &rotary, Settings &
     }
     return false;
 }
+
 static bool settings_config_set_clock(ST7735 &display, Rotary &rotary, Settings &settings, int index)
 {
     Clock clock = settings.get_clock(index);
-    tm clock_time = clock.exist() ? clock.get_timestamp() : get_rtc_time();
-    Date date(clock_time.tm_year + 1900, clock_time.tm_mon + 1, clock_time.tm_mday);
-    std::string date_string = date.to_string();
-    // get size and position of date string
-    GraphicsRect box = GraphicsText(0, 0, date_string, 1).get_rect();
-    box.center_x(ST7735_WIDTH / 2);
-    box.center_y(ST7735_HEIGHT / 2);
-    // create visual data
-    GraphicsText day_substring(box.left(), box.top(), date_string.substr(0, 2), 1);                             // dd
-    GraphicsText dot1_substring(day_substring.right() + 2, day_substring.top(), ".", 1);                        //.
-    GraphicsText mon_substring(dot1_substring.right() + 2, dot1_substring.top(), date_string.substr(3, 2), 1);  // mm
-    GraphicsText dot2_substring(mon_substring.right() + 2, mon_substring.top(), ".", 1);                        //.
-    GraphicsText year_substring(dot2_substring.right() + 2, dot2_substring.top(), date_string.substr(6, 4), 1); // yyyy
+    std::string title = receive_string_from_user(display, rotary, clock.get_title());
 
-    int current_select = SETTINGS_CONFIG_DAYS;
-    const int date_length = 3; // day, month and year
-    auto last_time = std::chrono::steady_clock::now();
-    bool toggle_current = true;
     int exit_status = SETTINGS_CONFIG_SAVE_CANCEL;
-
+    tm user_input_datetime = clock.exist() ? clock.get_timestamp() : get_rtc_time();
     while (!exit_status)
     {
-        // input
-        rotary.btn.update();
-        int spins = rotary.get_spin();
-        if (spins)
-        {
-            if (current_select == SETTINGS_CONFIG_DAYS)
-            {
-                date.set_day(ROUND_MOD(date.get_day() - 1, spins, date.month_days())); // 0 - month_days()
-            }
-            else if (current_select == SETTINGS_CONFIG_MONTHS)
-            {
-                date.set_month(ROUND_MOD(date.get_month() - 1, spins, 12)); // 0 - 11
-                // if change month should check day
-                date.set_day(ROUND_MOD(date.get_day() - 1, 0, date.month_days())); // 0 - month_days()
-            }
-            else if (current_select == SETTINGS_CONFIG_YEARS)
-            {
-                date.set_year(1900 + ROUND_MOD(date.get_year() - 1900, spins, 201)); // 1900 - 2100
-                                                                                     // if change years should check day (for 29.02)
-                date.set_day(ROUND_MOD(date.get_day() - 1, 0, date.month_days()));   // 0 - month_days()
-            }
-            date_string = date.to_string();
-            day_substring = GraphicsText(box.left(), box.top(), date_string.substr(0, 2), 1);
-            mon_substring = GraphicsText(dot1_substring.right() + 2, dot1_substring.top(), date_string.substr(3, 2), 1);
-            year_substring = GraphicsText(dot2_substring.right() + 2, dot2_substring.top(), date_string.substr(6, 4), 1);
-        }
-        if (rotary.btn.clicked())
-        {
-            current_select = ROUND_MOD(current_select, 1, date_length);
-            last_time = std::chrono::steady_clock::now();
-        }
-        if (rotary.btn.hold_down())
-            exit_status = confirm_save_changes(display, rotary);
-        auto current_time = std::chrono::steady_clock::now();
-        std::chrono::duration<double> delta = current_time - last_time;
-        if (delta.count() >= 0.5)
-        {
-            toggle_current = !toggle_current;
-            last_time = current_time; // Reset the last print time
-        }
-
-        day_substring.draw(display, current_select == SETTINGS_CONFIG_DAYS && !toggle_current ? ST7735_BLACK : ST7735_WHITE);
-        dot1_substring.draw(display, ST7735_WHITE);
-        mon_substring.draw(display, current_select == SETTINGS_CONFIG_MONTHS && !toggle_current ? ST7735_BLACK : ST7735_WHITE);
-        dot2_substring.draw(display, ST7735_WHITE);
-        year_substring.draw(display, current_select == SETTINGS_CONFIG_YEARS && !toggle_current ? ST7735_BLACK : ST7735_WHITE);
-        display.update();
-        display.fill(ST7735_BLACK);
+        user_input_datetime = receive_datetime_from_user(display, rotary, user_input_datetime, false);
+        exit_status = confirm_save_changes(display, rotary);
     }
     if (exit_status == SETTINGS_CONFIG_SAVE_TRUE)
     {
-        tm time = get_rtc_time();
-        time.tm_year = date.get_year() - 1900;
-        time.tm_mon = date.get_month() - 1;
-        time.tm_mday = date.get_day();
-        clock.set_timestamp(time);
+        clock.set_timestamp(user_input_datetime);
+        clock.set_title(title);
         printf("clock is %s ; %s", clock.exist() ? "exist" : "not exist", clock.get_title());
         settings.set_clock(clock, index);
     }

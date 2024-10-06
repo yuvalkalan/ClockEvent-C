@@ -75,6 +75,10 @@ void Clock::set_timestamp(tm timestamp)
 {
     m_timestamp = timestamp;
 }
+void Clock::set_title(const std::string &title)
+{
+    m_title = title;
+}
 
 Settings::Settings() : m_clocks()
 {

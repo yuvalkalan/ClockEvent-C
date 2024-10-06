@@ -210,31 +210,16 @@ int main()
     }
     return 0;
 }
-
 // int main()
 // {
 //     init_all();
 //     sleep_ms(1000);
-//     Settings settings;
-//     for (int i = 0; i < SETTINGS_MAX_CLOCKS; i++)
-//     {
-//         Clock c = settings.get_clock(i);
-//         printf("clock\texist: %d\ttitle: %s\ttime: [%s]\n", c.exist(), c.get_title().c_str(), tm_to_string(c.get_timestamp()).c_str());
-//     }
-//     printf("\n--------------------------------------------------\n");
-//     settings.reset();
+//     ST7735 display(ST7735_SPI_PORT, ST7735_SPI_BAUDRATE, ST7735_PIN_SCK, ST7735_PIN_MOSI, ST7735_PIN_CS, ST7735_PIN_DC, ST7735_PIN_RST);
+//     display.init_red();
+//     display.fill(ST7735_BLACK);
+//     Rotary rotary(ROTARY_PIN_OUT_A, ROTARY_PIN_OUT_B, BUTTON_PIN);
 //     copy_DS3231_time();
-//     for (int i = 0; i < SETTINGS_MAX_CLOCKS; i++)
-//     {
-//         settings.set_clock(Clock(1, "1234567890", get_rtc_time()), i);
-//         sleep_ms(1000);
-//     }
-//     for (int i = 0; i < SETTINGS_MAX_CLOCKS; i++)
-//     {
-//         Clock c = settings.get_clock(i);
-//         printf("clock\texist: %d\ttitle: %s\ttime: [%s]\n", c.exist(), c.get_title().c_str(), tm_to_string(c.get_timestamp()).c_str());
-//     }
-//     while (1)
-//         ;
+//     receive_string_from_user(display, rotary, "Title");
+
 //     return 0;
 // }

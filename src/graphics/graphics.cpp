@@ -24,13 +24,13 @@ uint16_t GraphicsColor::fade(GraphicsColor &other, float precent) const
     uint8_t r = lerp(get_red(), other.get_red(), precent);
     uint8_t g = lerp(get_green(), other.get_green(), precent);
     uint8_t b = lerp(get_blue(), other.get_blue(), precent);
-    return GraphicsColor::makeColor(r, g, b);
+    return GraphicsColor::make_color(r, g, b);
 }
 GraphicsColor::operator uint16_t() const
 {
     return m_color;
 }
-uint16_t GraphicsColor::makeColor(uint8_t r, uint8_t g, uint8_t b)
+uint16_t GraphicsColor::make_color(uint8_t r, uint8_t g, uint8_t b)
 {
     return (r << 11) | (g << 5) | (b);
 }

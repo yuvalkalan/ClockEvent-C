@@ -60,6 +60,7 @@ public:
     // ------------------------------------------
     // setters ----------------------------------
     void set_timestamp(tm timestamp);
+    void set_title(const std::string &title);
     // ------------------------------------------
 };
 
