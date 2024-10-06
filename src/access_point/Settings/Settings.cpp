@@ -8,7 +8,7 @@ static void enable_usb(bool enable)
 #else
 void enable_usb(bool enable) {}
 #endif
-Clock::Clock() : m_exist(0), m_type(0), m_title(""), m_timestamp() {}
+Clock::Clock() : m_exist(0), m_type(SETTINGS_CLOCK_TYPE_FROM), m_title(""), m_timestamp() {}
 Clock::Clock(uint8_t type, const char title[10], tm timestamp) : m_exist(true), m_type(type), m_title(title), m_timestamp(timestamp) {}
 Clock::Clock(const Clock &other) : m_exist(other.m_exist), m_type(other.m_type), m_title(other.m_title), m_timestamp(other.m_timestamp) {}
 bool Clock::exist() const
@@ -74,12 +74,18 @@ tm Clock::calculate(tm current_time) const
 void Clock::set_timestamp(tm timestamp)
 {
     m_timestamp = timestamp;
+    m_exist = true;
 }
 void Clock::set_title(const std::string &title)
 {
     m_title = title;
+    m_exist = true;
 }
-
+void Clock::set_type(uint8_t type)
+{
+    m_type = type;
+    m_exist = true;
+}
 Settings::Settings() : m_clocks()
 {
     if (exist())

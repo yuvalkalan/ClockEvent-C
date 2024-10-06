@@ -35,6 +35,7 @@
 #define SETTINGS_CLOCK_TYPE_TO_REPEAT_Y 3 // show time from now to tm until the next annual appearance
 #define SETTINGS_CLOCK_TYPE_TO_REPEAT_M 4 // show time from now to tm until the next monthly appearance
 #define SETTINGS_CLOCK_TYPE_TO_REPEAT_D 5 // show time from now to tm until the next daily appearance
+#define SETTINGS_CLOCK_TOTAL_TYPES 6      // total types of clock
 // -----------------------------------------------------------------------------------------
 
 class Clock
@@ -61,6 +62,7 @@ public:
     // setters ----------------------------------
     void set_timestamp(tm timestamp);
     void set_title(const std::string &title);
+    void set_type(uint8_t type);
     // ------------------------------------------
 };
 

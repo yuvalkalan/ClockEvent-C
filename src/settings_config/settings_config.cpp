@@ -217,7 +217,38 @@ static std::string receive_string_from_user(ST7735 &display, Rotary &rotary, con
     }
     return current_string;
 }
-
+static int receive_clock_type_from_user(ST7735 &display, Rotary &rotary, uint8_t start_type)
+{
+    uint8_t current_type = start_type - 1; // remove the raw option
+    bool exit = false;
+    GraphicsText types_titles[] = {
+        {0, 0, "Counter", 1},
+        {0, 0, "Countdown", 1},
+        {0, 0, "Countdown\n(annual)", 1},
+        {0, 0, "Countdown\n(monthly)", 1},
+        {0, 0, "Countdown\n(daily)", 1},
+    };
+    for (GraphicsText &msg : types_titles)
+    {
+        msg.center_x(ST7735_WIDTH / 2);
+        msg.center_y(ST7735_HEIGHT / 2);
+    }
+    while (!exit)
+    {
+        rotary.btn.update();
+        int spins = rotary.get_spin();
+        if (spins)
+        {
+            current_type = ROUND_MOD(current_type, spins, SETTINGS_CLOCK_TOTAL_TYPES - 1); // remove the raw option
+        }
+        if (rotary.btn.hold_down())
+            exit = true;
+        types_titles[current_type].draw(display, ST7735_WHITE);
+        display.update();
+        display.fill(ST7735_BLACK);
+    }
+    return current_type + 1; // add one to set it to real type
+}
 static bool confirm_settings_reset(ST7735 &display, Rotary &rotary)
 {
     bool confirmed = false;
@@ -380,7 +411,7 @@ static bool settings_config_set_clock(ST7735 &display, Rotary &rotary, Settings 
 {
     Clock clock = settings.get_clock(index);
     std::string title = receive_string_from_user(display, rotary, clock.get_title());
-
+    int clock_type = receive_clock_type_from_user(display, rotary, clock.get_type());
     int exit_status = SETTINGS_CONFIG_SAVE_CANCEL;
     tm user_input_datetime = clock.exist() ? clock.get_timestamp() : get_rtc_time();
     while (!exit_status)
@@ -390,8 +421,9 @@ static bool settings_config_set_clock(ST7735 &display, Rotary &rotary, Settings 
     }
     if (exit_status == SETTINGS_CONFIG_SAVE_TRUE)
     {
-        clock.set_timestamp(user_input_datetime);
         clock.set_title(title);
+        clock.set_timestamp(user_input_datetime);
+        clock.set_type(clock_type);
         printf("clock is %s ; %s", clock.exist() ? "exist" : "not exist", clock.get_title());
         settings.set_clock(clock, index);
     }
