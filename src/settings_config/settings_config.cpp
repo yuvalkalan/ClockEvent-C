@@ -202,7 +202,7 @@ static std::string receive_string_from_user(ST7735 &display, Rotary &rotary, con
         // handle display
         GraphicsText display_string(5, 0, current_string, 1);
         display_string.center_y(ST7735_HEIGHT / 2);
-        GraphicsText display_current(display_string.right(), display_string.top(), std::string(1, char_map[current_index]), 1);
+        GraphicsText display_current(display_string.right() + 1, display_string.top(), std::string(1, char_map[current_index]), 1);
         GraphicsText display_underscore(display_current.left(), display_current.top() + 1, std::string(1, '_'), 1);
 
         display_string.draw(display, ST7735_WHITE);
@@ -217,7 +217,7 @@ static std::string receive_string_from_user(ST7735 &display, Rotary &rotary, con
     }
     return current_string;
 }
-static int receive_clock_type_from_user(ST7735 &display, Rotary &rotary, uint8_t start_type)
+static uint8_t receive_clock_type_from_user(ST7735 &display, Rotary &rotary, uint8_t start_type)
 {
     uint8_t current_type = start_type - 1; // remove the raw option
     bool exit = false;
@@ -411,7 +411,7 @@ static bool settings_config_set_clock(ST7735 &display, Rotary &rotary, Settings 
 {
     Clock clock = settings.get_clock(index);
     std::string title = receive_string_from_user(display, rotary, clock.get_title());
-    int clock_type = receive_clock_type_from_user(display, rotary, clock.get_type());
+    uint8_t clock_type = receive_clock_type_from_user(display, rotary, clock.get_type());
     int exit_status = SETTINGS_CONFIG_SAVE_CANCEL;
     tm user_input_datetime = clock.exist() ? clock.get_timestamp() : get_rtc_time();
     while (!exit_status)
@@ -424,8 +424,8 @@ static bool settings_config_set_clock(ST7735 &display, Rotary &rotary, Settings 
         clock.set_title(title);
         clock.set_timestamp(user_input_datetime);
         clock.set_type(clock_type);
-        printf("clock is %s ; %s", clock.exist() ? "exist" : "not exist", clock.get_title());
         settings.set_clock(clock, index);
+        software_reset(); // reset for clock to take place
     }
     return false;
 }

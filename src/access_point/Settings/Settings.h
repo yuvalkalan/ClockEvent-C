@@ -26,7 +26,7 @@
 #define SETTINGS_EXIST_OFFSET 0                                                                        // 1 byte
 #define SETTINGS_CLOCKS_ARRAY_OFFSET (SETTINGS_EXIST_OFFSET + 1)                                       // SETTINGS_CLOCK_SIZE * SETTINGS_MAX_CLOCKS  bytes
 #define SETTINGS_TOTAL_SIZE (SETTINGS_CLOCKS_ARRAY_OFFSET + SETTINGS_CLOCK_SIZE * SETTINGS_MAX_CLOCKS) // total settings size
-#define SETTINGS_PAGES_TOTAL_SIZE (FLASH_PAGE_SIZE * (1 + SETTINGS_TOTAL_SIZE / FLASH_PAGE_SIZE))      // total settings size fixed to next page size
+#define SETTINGS_PAGES_TOTAL_SIZE (FLASH_PAGE_SIZE * (1 + SETTINGS_TOTAL_SIZE / FLASH_PAGE_SIZE))      // total settings size fixed to next page size - dont not edit directly, change SETTINGS_TOTAL_SIZE!
 // -----------------------------------------------------------------------------------------
 // clock types -----------------------------------------------------------------------------
 #define SETTINGS_CLOCK_TYPE_RAW 0         // show time tm, no calculation
