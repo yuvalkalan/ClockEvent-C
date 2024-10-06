@@ -115,7 +115,6 @@ Time &Time::operator+=(int sec)
     while (m_sec >= 60)
     {
         m_sec -= 60;
-
         m_min += 1;
     }
     while (m_min >= 60)

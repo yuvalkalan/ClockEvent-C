@@ -53,6 +53,7 @@ private:
     uint8_t m_scale;
 
 public:
+    GraphicsText(); // default constractor
     GraphicsText(int x, int y, std::string string, uint8_t scale);
     ~GraphicsText() override;
     void draw(ST7735 &display, uint16_t color) override;

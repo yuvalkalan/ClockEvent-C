@@ -146,7 +146,9 @@ void GraphicsRect::draw(ST7735 &display, uint16_t color)
         }
     }
 }
-
+GraphicsText::GraphicsText() : GraphicsRect(0, 0, 0, 0), m_string(""), m_scale(0)
+{
+}
 GraphicsText::GraphicsText(int x, int y, std::string string, uint8_t scale) : GraphicsRect(x,
                                                                                            y,
                                                                                            get_string_width(string, scale),

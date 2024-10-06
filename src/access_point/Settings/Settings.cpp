@@ -27,7 +27,6 @@ tm Clock::get_timestamp() const
 {
     return m_timestamp;
 }
-
 tm Clock::calculate(tm current_time) const
 {
     if (m_type == SETTINGS_CLOCK_TYPE_RAW)
@@ -72,6 +71,10 @@ tm Clock::calculate(tm current_time) const
     // this should not reach here!!
     return tm();
 }
+void Clock::set_timestamp(tm timestamp)
+{
+    m_timestamp = timestamp;
+}
 
 Settings::Settings() : m_clocks()
 {
@@ -104,7 +107,7 @@ void Settings::read()
 void Settings::write()
 {
     // create page --------------------
-    uint8_t data[FLASH_PAGE_SIZE];
+    uint8_t data[SETTINGS_PAGES_TOTAL_SIZE];
     data[SETTINGS_EXIST_OFFSET] = 1;
     uint8_t clock_arr[SETTINGS_MAX_CLOCKS][SETTINGS_CLOCK_SIZE];
     for (int i = 0; i < SETTINGS_MAX_CLOCKS; i++)
@@ -145,7 +148,7 @@ void Settings::reset()
         m_clocks[i] = Clock();
     }
 }
-const Clock &Settings::get_clock(uint8_t index) const
+Clock Settings::get_clock(uint8_t index) const
 {
     return m_clocks[index];
 }

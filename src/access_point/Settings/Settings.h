@@ -14,7 +14,7 @@
 #define SETTINGS_READ_START (SETTINGS_WRITE_START + XIP_BASE)
 // -----------------------------------------------------------------------------------------
 // settings clock configuration ------------------------------------------------------------
-#define SETTINGS_MAX_CLOCKS 5                                                                // max number of clocks
+#define SETTINGS_MAX_CLOCKS 3                                                                // max number of clocks
 #define SETTINGS_CLOCK_TITLE_LENGTH 10 + 1                                                   // max characters in clock title(add one byte to the 0 value at the end of the string)
 #define SETTINGS_CLOCK_EXIST_OFFSET 0                                                        // is clock exist, 1 byte
 #define SETTINGS_CLOCK_TYPE_OFFSET (SETTINGS_CLOCK_EXIST_OFFSET + 1)                         // type of clock counter, 1 byte
@@ -23,8 +23,10 @@
 #define SETTINGS_CLOCK_SIZE (SETTINGS_CLOCK_TM_OFFSET + sizeof(tm))                          // total size of clock in bytes
 // -----------------------------------------------------------------------------------------
 // settings file contant offsets -----------------------------------------------------------
-#define SETTINGS_EXIST_OFFSET 0                                  // 1 byte
-#define SETTINGS_CLOCKS_ARRAY_OFFSET (SETTINGS_EXIST_OFFSET + 1) // SETTINGS_CLOCK_SIZE * SETTINGS_MAX_CLOCKS  bytes
+#define SETTINGS_EXIST_OFFSET 0                                                                        // 1 byte
+#define SETTINGS_CLOCKS_ARRAY_OFFSET (SETTINGS_EXIST_OFFSET + 1)                                       // SETTINGS_CLOCK_SIZE * SETTINGS_MAX_CLOCKS  bytes
+#define SETTINGS_TOTAL_SIZE (SETTINGS_CLOCKS_ARRAY_OFFSET + SETTINGS_CLOCK_SIZE * SETTINGS_MAX_CLOCKS) // total settings size
+#define SETTINGS_PAGES_TOTAL_SIZE (FLASH_PAGE_SIZE * (1 + SETTINGS_TOTAL_SIZE / FLASH_PAGE_SIZE))      // total settings size fixed to next page size
 // -----------------------------------------------------------------------------------------
 // clock types -----------------------------------------------------------------------------
 #define SETTINGS_CLOCK_TYPE_RAW 0         // show time tm, no calculation
@@ -56,6 +58,9 @@ public:
     tm get_timestamp() const;
     tm calculate(tm current_time) const;
     // ------------------------------------------
+    // setters ----------------------------------
+    void set_timestamp(tm timestamp);
+    // ------------------------------------------
 };
 
 class Settings
@@ -72,7 +77,7 @@ public:
     Settings();
     // getters
     bool exist() const;
-    const Clock &get_clock(uint8_t index) const;
+    Clock get_clock(uint8_t index) const;
     // setters
     void set_clock(const Clock &clock, uint8_t index);
     void reset();
