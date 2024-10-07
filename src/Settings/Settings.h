@@ -49,7 +49,7 @@ private:
 public:
     // constractors -----------------------------
     Clock();                                                 // default constractor
-    Clock(uint8_t type, const char title[10], tm timestamp); // constractor
+    Clock(uint8_t type, const char title[SETTINGS_CLOCK_TITLE_LENGTH], tm timestamp); // constractor
     Clock(const Clock &other);                               // copy constractor
     // ------------------------------------------
     // getters ----------------------------------

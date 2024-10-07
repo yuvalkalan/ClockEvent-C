@@ -9,7 +9,7 @@ static void enable_usb(bool enable)
 void enable_usb(bool enable) {}
 #endif
 Clock::Clock() : m_exist(0), m_type(SETTINGS_CLOCK_TYPE_FROM), m_title(""), m_timestamp() {}
-Clock::Clock(uint8_t type, const char title[10], tm timestamp) : m_exist(true), m_type(type), m_title(title), m_timestamp(timestamp) {}
+Clock::Clock(uint8_t type, const char title[SETTINGS_CLOCK_TITLE_LENGTH], tm timestamp) : m_exist(true), m_type(type), m_title(title), m_timestamp(timestamp) {}
 Clock::Clock(const Clock &other) : m_exist(other.m_exist), m_type(other.m_type), m_title(other.m_title), m_timestamp(other.m_timestamp) {}
 bool Clock::exist() const
 {
@@ -135,7 +135,7 @@ void Settings::write()
     enable_usb(false);
     uint32_t ints = save_and_disable_interrupts();
     flash_range_erase(SETTINGS_WRITE_START, FLASH_SECTOR_SIZE);
-    flash_range_program(SETTINGS_WRITE_START, data, FLASH_PAGE_SIZE);
+    flash_range_program(SETTINGS_WRITE_START, data, SETTINGS_PAGES_TOTAL_SIZE);
     restore_interrupts(ints);
     enable_usb(true);
     // --------------------------------
@@ -144,7 +144,6 @@ bool Settings::exist() const
 {
     return settings_flash_buffer[SETTINGS_EXIST_OFFSET] == 1;
 }
-
 void Settings::reset()
 {
     printf("reset settings!\n");
