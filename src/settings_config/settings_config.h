@@ -4,7 +4,7 @@
 #include <chrono>
 #include "../graphics/graphics.h"
 #include "../Rotary/Rotary.h"
-#include "../access_point/Settings/Settings.h"
+#include "../Settings/Settings.h"
 #include "../DS3231/DS3231.h"
 #include <algorithm>
 

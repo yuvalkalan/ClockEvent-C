@@ -23,7 +23,7 @@ if(EXISTS ${picoVscode})
     include(${picoVscode})
 endif()
 # ====================================================================================
-set(PICO_BOARD pico_w CACHE STRING "Board type")
+set(PICO_BOARD pico CACHE STRING "Board type")
 
 # Pull in Raspberry Pi Pico SDK (must be before project)
 include(pico_sdk_import.cmake)
@@ -50,16 +50,13 @@ execute_process(COMMAND
 
 add_executable(${PROJECT_NAME}
     src/ClockEvent-C.cpp
-    src/access_point/dhcpserver/dhcpserver.cpp
-    src/access_point/dnsserver/dnsserver.cpp
-    src/access_point/access_point.cpp
-    src/access_point/Settings/Settings.cpp
     src/DS3231/DS3231.cpp
     src/graphics/ST7735/ST7735.cpp
     src/graphics/graphics.cpp
     src/Rotary/Rotary.cpp
     src/Rotary/Button/Button.cpp
-    src/access_point/Settings/TimeMaster/TimeMaster.cpp
+    src/Settings/Settings.cpp
+    src/Settings/TimeMaster/TimeMaster.cpp
     src/settings_config/settings_config.cpp
 )
 
@@ -78,7 +75,7 @@ target_link_libraries(${PROJECT_NAME}
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}
     #   ${CMAKE_CURRENT_LIST_DIR}/.. # for our common lwipopts or any other standard includes, if required
-    ${CMAKE_CURRENT_LIST_DIR}/src/access_point # for our common lwipopts or any other standard includes, if required
+    # ${CMAKE_CURRENT_LIST_DIR}/src/access_point # for our common lwipopts or any other standard includes, if required
 
 )
 
@@ -93,7 +90,6 @@ target_link_libraries(${PROJECT_NAME}
     hardware_watchdog
     hardware_clocks
     hardware_rtc
-    pico_cyw43_arch_lwip_threadsafe_background
 )
 
 pico_add_extra_outputs(${PROJECT_NAME})

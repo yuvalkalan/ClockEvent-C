@@ -425,6 +425,7 @@ static bool settings_config_set_clock(ST7735 &display, Rotary &rotary, Settings 
     }
     if (exit_status == SETTINGS_CONFIG_SAVE_TRUE)
     {
+        printf("clock (%d): %s, %d", index, title.c_str(), clock_type);
         clock.set_title(title);
         clock.set_timestamp(user_input_datetime);
         clock.set_type(clock_type);

@@ -1,4 +1,3 @@
-#include "access_point/access_point.h"
 #include "settings_config/settings_config.h"
 // display pins -----------------------
 #define ST7735_PIN_DC 9    // Data/Command

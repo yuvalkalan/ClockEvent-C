@@ -18,4 +18,4 @@ def html_to_c_string(html_file, output_c_file):
         f.write(c_string + ';\n')
 
 # Example usage
-html_to_c_string(r'src\html_files\index.html', r'src\access_point\htmldata.cpp')
+html_to_c_string(r'src\html_files\index.html', r'src\htmldata.h')
