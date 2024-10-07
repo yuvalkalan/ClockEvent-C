@@ -3,8 +3,8 @@ import time
 import pygame
 import numpy as np
 
-WIDTH = 11
-HEIGHT = 23
+WIDTH = 10
+HEIGHT = 22
 FONT_PATH = r'src\python_scripts\JetBrainsMono-ExtraLight.ttf'
 DST_PATH = r"src\graphics\ST7735\font.h"
 # Define colors

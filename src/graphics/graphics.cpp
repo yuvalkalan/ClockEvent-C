@@ -67,7 +67,7 @@ static int get_string_width(const std::string &string, uint8_t scale)
         }
     }
     max_length = current_length > max_length ? current_length : max_length;
-    return max_length * scale * (FONT_CHAR_WIDTH + 1) - scale;
+    return max_length * scale * (FONT_CHAR_WIDTH + 1);
 }
 static int get_string_height(const std::string &string, uint8_t scale)
 {

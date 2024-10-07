@@ -6,6 +6,7 @@
 #include "../Rotary/Rotary.h"
 #include "../access_point/Settings/Settings.h"
 #include "../DS3231/DS3231.h"
+#include <algorithm>
 
 #define SETTINGS_CONFIG_SELECTED_COLOR 0x1082
 #define ROUND_MOD(x, y, max) ((((x) + (y)) % (max) + (max)) % (max))
@@ -21,6 +22,8 @@
 #define SETTINGS_CONFIG_SAVE_TRUE 1
 #define SETTINGS_CONFIG_SAVE_FALSE 2
 #define SETTINGS_CONFIG_SAVE_LENGTH 3
+
+#define SETTINGS_CONFIG_MAX_ROWS 4
 
 void software_reset();
 void settings_config_main(ST7735 &display, Rotary &rotary, Settings &settings);

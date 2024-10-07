@@ -33,11 +33,11 @@ static tm receive_datetime_from_user(ST7735 &display, Rotary &rotary, const tm &
     date_box.center_x(ST7735_WIDTH / 2);
     date_box.center_y(ST7735_HEIGHT / 3);
     // create date graphics
-    GraphicsText day_substring(date_box.left(), date_box.top(), date_string.substr(0, 2), 1);                   // dd
-    GraphicsText dot1_substring(day_substring.right() + 2, day_substring.top(), ".", 1);                        //.
-    GraphicsText mon_substring(dot1_substring.right() + 2, dot1_substring.top(), date_string.substr(3, 2), 1);  // mm
-    GraphicsText dot2_substring(mon_substring.right() + 2, mon_substring.top(), ".", 1);                        //.
-    GraphicsText year_substring(dot2_substring.right() + 2, dot2_substring.top(), date_string.substr(6, 4), 1); // yyyy
+    GraphicsText day_substring(date_box.left(), date_box.top(), date_string.substr(0, 2), 1);               // dd
+    GraphicsText dot1_substring(day_substring.right(), day_substring.top(), ".", 1);                        //.
+    GraphicsText mon_substring(dot1_substring.right(), dot1_substring.top(), date_string.substr(3, 2), 1);  // mm
+    GraphicsText dot2_substring(mon_substring.right(), mon_substring.top(), ".", 1);                        //.
+    GraphicsText year_substring(dot2_substring.right(), dot2_substring.top(), date_string.substr(6, 4), 1); // yyyy
     // create time graphics
     Time time(start_time.tm_hour, start_time.tm_min, start_time.tm_sec);
     auto start_chrono_clock = std::chrono::steady_clock::now();
@@ -47,11 +47,11 @@ static tm receive_datetime_from_user(ST7735 &display, Rotary &rotary, const tm &
     time_box.center_x(ST7735_WIDTH / 2);
     time_box.center_y(ST7735_HEIGHT / 3 * 2);
     // create visual data
-    GraphicsText hour_substring(time_box.left(), time_box.top(), time_string.substr(0, 2), 1);                     // hh
-    GraphicsText colon1_substring(hour_substring.right() + 2, hour_substring.top(), ":", 1);                       //:
-    GraphicsText min_substring(colon1_substring.right() + 2, colon1_substring.top(), time_string.substr(3, 2), 1); // mm
-    GraphicsText colon2_substring(min_substring.right() + 2, min_substring.top(), ":", 1);                         //:
-    GraphicsText sec_substring(colon2_substring.right() + 2, colon2_substring.top(), time_string.substr(6, 2), 1); // ss
+    GraphicsText hour_substring(time_box.left(), time_box.top(), time_string.substr(0, 2), 1);                 // hh
+    GraphicsText colon1_substring(hour_substring.right(), hour_substring.top(), ":", 1);                       //:
+    GraphicsText min_substring(colon1_substring.right(), colon1_substring.top(), time_string.substr(3, 2), 1); // mm
+    GraphicsText colon2_substring(min_substring.right(), min_substring.top(), ":", 1);                         //:
+    GraphicsText sec_substring(colon2_substring.right(), colon2_substring.top(), time_string.substr(6, 2), 1); // ss
 
     int current_select = SETTINGS_CONFIG_DAYS;
     const int datetime_length = 6; // day, mon, year, hour, min and sec
@@ -96,8 +96,8 @@ static tm receive_datetime_from_user(ST7735 &display, Rotary &rotary, const tm &
             }
             date_string = date.to_string();
             day_substring = GraphicsText(date_box.left(), date_box.top(), date_string.substr(0, 2), 1);
-            mon_substring = GraphicsText(dot1_substring.right() + 2, dot1_substring.top(), date_string.substr(3, 2), 1);
-            year_substring = GraphicsText(dot2_substring.right() + 2, dot2_substring.top(), date_string.substr(6, 4), 1);
+            mon_substring = GraphicsText(dot1_substring.right(), dot1_substring.top(), date_string.substr(3, 2), 1);
+            year_substring = GraphicsText(dot2_substring.right(), dot2_substring.top(), date_string.substr(6, 4), 1);
         }
         if (rotary.btn.clicked())
         {
@@ -135,9 +135,9 @@ static tm receive_datetime_from_user(ST7735 &display, Rotary &rotary, const tm &
         //      display time
         //          set time graphics
         time_string = time.to_string();
-        hour_substring = GraphicsText(time_box.left(), time_box.top(), time_string.substr(0, 2), 1);                     // hh
-        min_substring = GraphicsText(colon1_substring.right() + 2, colon1_substring.top(), time_string.substr(3, 2), 1); // mm
-        sec_substring = GraphicsText(colon2_substring.right() + 2, colon2_substring.top(), time_string.substr(6, 2), 1); // ss
+        hour_substring = GraphicsText(time_box.left(), time_box.top(), time_string.substr(0, 2), 1);                 // hh
+        min_substring = GraphicsText(colon1_substring.right(), colon1_substring.top(), time_string.substr(3, 2), 1); // mm
+        sec_substring = GraphicsText(colon2_substring.right(), colon2_substring.top(), time_string.substr(6, 2), 1); // ss
         //          display time
         hour_substring.draw(display, current_select == SETTINGS_CONFIG_HOURS && !toggle_current ? ST7735_BLACK : ST7735_WHITE);
         colon1_substring.draw(display, ST7735_WHITE);
@@ -202,7 +202,7 @@ static std::string receive_string_from_user(ST7735 &display, Rotary &rotary, con
         // handle display
         GraphicsText display_string(5, 0, current_string, 1);
         display_string.center_y(ST7735_HEIGHT / 2);
-        GraphicsText display_current(display_string.right() + 1, display_string.top(), std::string(1, char_map[current_index]), 1);
+        GraphicsText display_current(display_string.right(), display_string.top(), std::string(1, char_map[current_index]), 1);
         GraphicsText display_underscore(display_current.left(), display_current.top() + 1, std::string(1, '_'), 1);
 
         display_string.draw(display, ST7735_WHITE);
@@ -335,13 +335,13 @@ static void display_settings_config(ST7735 &display, Rotary &rotary, Settings &s
      */
     int current_select = 0;
     bool exit = false;
-    // // check if display overflow screen
-    // bool overflow_display_y = false;
-    // for (size_t i = 0; i < msgs_length; i++)
-    // {
-    //     overflow_display_y = overflow_display_y || msgs[i].msg.bottom() > ST7735_HEIGHT;
-    // }
-    // printf("overflow_display_y = %d", overflow_display_y ? 1 : 0);
+    // check if display overflow screen
+    bool overflow_display_y = false;
+    for (size_t i = 0; i < msgs_length; i++)
+    {
+        overflow_display_y = overflow_display_y || msgs[i].msg.bottom() > ST7735_HEIGHT;
+    }
+    printf("overflow_display_y = %d", overflow_display_y ? 1 : 0);
     while (!exit)
     {
         // input
@@ -350,20 +350,20 @@ static void display_settings_config(ST7735 &display, Rotary &rotary, Settings &s
         if (spins)
         {
             current_select = ROUND_MOD(current_select, spins, msgs_length);
-            // if (overflow_display_y) // if overflow, move current selected to center
-            // {
-            //     for (size_t i = 0; i < msgs_length; i++)
-            //     {
-            //         msgs[i].msg.center_y(ST7735_HEIGHT / (msgs_length) * (i + 1 - current_select));
-            //     }
-            // }
+            if (overflow_display_y) // if overflow, move current selected to top
+            {
+                for (size_t i = 0; i < msgs_length; i++)
+                {
+                    msgs[i].msg.center_y(ST7735_HEIGHT / (SETTINGS_CONFIG_MAX_ROWS + 1) * (i + 1 - std::min(current_select, msgs_length - SETTINGS_CONFIG_MAX_ROWS)));
+                }
+            }
         }
         if (rotary.btn.clicked())
             exit = msgs[current_select].func(display, rotary, settings, msgs[current_select].id); // apply function
         // display
         for (size_t i = 0; i < msgs_length; i++)
         {
-            GraphicsText msg = msgs[i].msg;
+            GraphicsText &msg = msgs[i].msg;
             if (i == current_select)
             {
 
@@ -372,8 +372,12 @@ static void display_settings_config(ST7735 &display, Rotary &rotary, Settings &s
                 r.center_y(msg.center_y());
                 r.draw(display, SETTINGS_CONFIG_SELECTED_COLOR);
             }
-            msg.draw(display, ST7735_WHITE);
-            draw_settings_config_separator(display, msg.bottom());
+            const int top_row = std::min(current_select, msgs_length - SETTINGS_CONFIG_MAX_ROWS);
+            if (!overflow_display_y || top_row <= i && i < top_row + 4)
+            {
+                msg.draw(display, ST7735_WHITE);
+                draw_settings_config_separator(display, msg.bottom());
+            }
         }
         display.update();
         display.fill(ST7735_BLACK);
@@ -459,7 +463,7 @@ static bool settings_config_clocks(ST7735 &display, Rotary &rotary, Settings &se
     {
         auto &current_msg = msgs[i].msg; // just for comfort
         current_msg.center_x(ST7735_WIDTH / 2);
-        current_msg.center_y(ST7735_HEIGHT / (length + 1) * (i + 1));
+        current_msg.center_y(ST7735_HEIGHT / (SETTINGS_CONFIG_MAX_ROWS + 1) * (i + 1));
     }
     display_settings_config(display, rotary, settings, msgs, length);
     return false;
@@ -485,7 +489,7 @@ void settings_config_main(ST7735 &display, Rotary &rotary, Settings &settings)
     for (size_t i = 0; i < length; i++)
     {
         msgs[i].msg.center_x(ST7735_WIDTH / 2);
-        msgs[i].msg.center_y(ST7735_HEIGHT / (length + 1) * (i + 1));
+        msgs[i].msg.center_y(ST7735_HEIGHT / (SETTINGS_CONFIG_MAX_ROWS + 1) * (i + 1));
     }
     display_settings_config(display, rotary, settings, msgs, length);
 }

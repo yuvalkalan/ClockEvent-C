@@ -14,8 +14,8 @@
 #define SETTINGS_READ_START (SETTINGS_WRITE_START + XIP_BASE)
 // -----------------------------------------------------------------------------------------
 // settings clock configuration ------------------------------------------------------------
-#define SETTINGS_MAX_CLOCKS 3                                                                // max number of clocks
-#define SETTINGS_CLOCK_TITLE_LENGTH 10 + 1                                                   // max characters in clock title(add one byte to the 0 value at the end of the string)
+#define SETTINGS_MAX_CLOCKS 10                                                               // max number of clocks
+#define SETTINGS_CLOCK_TITLE_LENGTH 11 + 1                                                   // max characters in clock title(add one byte to the 0 value at the end of the string)
 #define SETTINGS_CLOCK_EXIST_OFFSET 0                                                        // is clock exist, 1 byte
 #define SETTINGS_CLOCK_TYPE_OFFSET (SETTINGS_CLOCK_EXIST_OFFSET + 1)                         // type of clock counter, 1 byte
 #define SETTINGS_CLOCK_TITLE_OFFSET (SETTINGS_CLOCK_TYPE_OFFSET + 1)                         // SETTINGS_CLOCK_TITLE_LENGTH bytes
