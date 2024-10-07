@@ -4,8 +4,9 @@ typedef bool (*config_func)(ST7735 &display, Rotary &rotary, Settings &settings,
 struct ConfigHeader
 {
     int id;
-    GraphicsText msg;
-    config_func func;
+    GraphicsText graphic_text;
+    config_func click_func;
+    config_func hold_func;
 };
 
 void software_reset()
@@ -281,7 +282,7 @@ static bool confirm_settings_reset(ST7735 &display, Rotary &rotary)
 }
 static uint8_t confirm_save_changes(ST7735 &display, Rotary &rotary)
 {
-    uint8_t exit_status = SETTINGS_CONFIG_SAVE_TRUE;
+    uint8_t exit_status = SETTINGS_CONFIG_STATUS_TRUE;
     bool finished = false;
     GraphicsText title_msg(0, 8, "Save\nChanges?", 1);
     title_msg.center_x(ST7735_WIDTH / 2);
@@ -303,14 +304,14 @@ static uint8_t confirm_save_changes(ST7735 &display, Rotary &rotary)
         rotary.btn.update();
         int spins = rotary.get_spin();
         if (spins)
-            exit_status = ROUND_MOD(exit_status, spins, SETTINGS_CONFIG_SAVE_LENGTH);
+            exit_status = ROUND_MOD(exit_status, spins, SETTINGS_CONFIG_STATUS_LENGTH);
         if (rotary.btn.hold_down())
             finished = true;
         display.fill(ST7735_BLACK);
         title_msg.draw(display, ST7735_WHITE);
-        yes_msg.draw(display, exit_status == SETTINGS_CONFIG_SAVE_TRUE ? ST7735_GREEN : ST7735_WHITE);
-        no_msg.draw(display, exit_status == SETTINGS_CONFIG_SAVE_FALSE ? ST7735_GREEN : ST7735_WHITE);
-        cancel_msg.draw(display, exit_status == SETTINGS_CONFIG_SAVE_CANCEL ? ST7735_GREEN : ST7735_WHITE);
+        yes_msg.draw(display, exit_status == SETTINGS_CONFIG_STATUS_TRUE ? ST7735_GREEN : ST7735_WHITE);
+        no_msg.draw(display, exit_status == SETTINGS_CONFIG_STATUS_FALSE ? ST7735_GREEN : ST7735_WHITE);
+        cancel_msg.draw(display, exit_status == SETTINGS_CONFIG_STATUS_CANCEL ? ST7735_GREEN : ST7735_WHITE);
         display.update();
     }
     return exit_status;
@@ -339,9 +340,8 @@ static void display_settings_config(ST7735 &display, Rotary &rotary, Settings &s
     bool overflow_display_y = false;
     for (size_t i = 0; i < msgs_length; i++)
     {
-        overflow_display_y = overflow_display_y || msgs[i].msg.bottom() > ST7735_HEIGHT;
+        overflow_display_y = overflow_display_y || msgs[i].graphic_text.bottom() > ST7735_HEIGHT;
     }
-    printf("overflow_display_y = %d", overflow_display_y ? 1 : 0);
     while (!exit)
     {
         // input
@@ -354,16 +354,22 @@ static void display_settings_config(ST7735 &display, Rotary &rotary, Settings &s
             {
                 for (size_t i = 0; i < msgs_length; i++)
                 {
-                    msgs[i].msg.center_y(ST7735_HEIGHT / (SETTINGS_CONFIG_MAX_ROWS + 1) * (i + 1 - std::min(current_select, msgs_length - SETTINGS_CONFIG_MAX_ROWS)));
+                    msgs[i].graphic_text.center_y(ST7735_HEIGHT / (SETTINGS_CONFIG_MAX_ROWS + 1) * (i + 1 - std::min(current_select, msgs_length - SETTINGS_CONFIG_MAX_ROWS)));
                 }
             }
         }
         if (rotary.btn.clicked())
-            exit = msgs[current_select].func(display, rotary, settings, msgs[current_select].id); // apply function
+        {
+            exit = msgs[current_select].click_func(display, rotary, settings, msgs[current_select].id); // apply function
+        }
+        else if (rotary.btn.hold_down())
+        {
+            exit = msgs[current_select].hold_func(display, rotary, settings, msgs[current_select].id);
+        }
         // display
         for (size_t i = 0; i < msgs_length; i++)
         {
-            GraphicsText &msg = msgs[i].msg;
+            GraphicsText &msg = msgs[i].graphic_text;
             if (i == current_select)
             {
 
@@ -384,13 +390,17 @@ static void display_settings_config(ST7735 &display, Rotary &rotary, Settings &s
     }
 }
 
+static bool settings_config_ignore(ST7735 &display, Rotary &rotary, Settings &settings, int index)
+{
+    return false;
+}
 static bool settings_config_exit(ST7735 &display, Rotary &rotary, Settings &settings, int index)
 {
     return true;
 }
 static bool settings_config_datetime(ST7735 &display, Rotary &rotary, Settings &settings, int index)
 {
-    int exit_status = SETTINGS_CONFIG_SAVE_CANCEL;
+    int exit_status = SETTINGS_CONFIG_STATUS_CANCEL;
     tm user_input_datetime = get_rtc_time();
     while (!exit_status)
     {
@@ -402,7 +412,7 @@ static bool settings_config_datetime(ST7735 &display, Rotary &rotary, Settings &
         std::chrono::duration<double> delta = end_time - start_time;
         tm_add_sec(user_input_datetime, delta.count());
     }
-    if (exit_status == SETTINGS_CONFIG_SAVE_TRUE)
+    if (exit_status == SETTINGS_CONFIG_STATUS_TRUE)
     {
         // set ds3231 amd rtc time
         setDS3231Time(&user_input_datetime);
@@ -410,20 +420,57 @@ static bool settings_config_datetime(ST7735 &display, Rotary &rotary, Settings &
     }
     return false;
 }
+static bool settings_config_remove_clock(ST7735 &display, Rotary &rotary, Settings &settings, int index)
+{
+    Clock clock = settings.get_clock(index);
+    if (!clock.exist())
+        return false;
+    bool exit_status = false;
+    bool finished = false;
+    GraphicsText title_msg(0, 8, "Delete\nClock?", 1);
+    title_msg.center_x(ST7735_WIDTH / 2);
 
+    GraphicsText yes_msg(0, 0, "yes", 1);
+    yes_msg.center_x(ST7735_WIDTH / 4);
+    yes_msg.center_y(ST7735_HEIGHT / 2);
+
+    GraphicsText no_msg(0, 0, "no", 1);
+    no_msg.center_x(ST7735_WIDTH / 4 * 3);
+    no_msg.center_y(ST7735_HEIGHT / 2);
+    while (!finished)
+    {
+        rotary.btn.update();
+        int spins = rotary.get_spin();
+        if (spins % 2 != 0)
+            exit_status = !exit_status;
+        if (rotary.btn.hold_down())
+            finished = true;
+        display.fill(ST7735_BLACK);
+        title_msg.draw(display, ST7735_WHITE);
+        yes_msg.draw(display, exit_status ? ST7735_GREEN : ST7735_WHITE);
+        no_msg.draw(display, !exit_status ? ST7735_GREEN : ST7735_WHITE);
+        display.update();
+    }
+    if (exit_status)
+    {
+        settings.set_clock(Clock(), index); // set clock to defualt clock
+        software_reset();
+    }
+    return false;
+}
 static bool settings_config_set_clock(ST7735 &display, Rotary &rotary, Settings &settings, int index)
 {
     Clock clock = settings.get_clock(index);
     std::string title = receive_string_from_user(display, rotary, clock.get_title());
     uint8_t clock_type = receive_clock_type_from_user(display, rotary, clock.get_type());
-    int exit_status = SETTINGS_CONFIG_SAVE_CANCEL;
+    int exit_status = SETTINGS_CONFIG_STATUS_CANCEL;
     tm user_input_datetime = clock.exist() ? clock.get_timestamp() : get_rtc_time();
     while (!exit_status)
     {
         user_input_datetime = receive_datetime_from_user(display, rotary, user_input_datetime, false);
         exit_status = confirm_save_changes(display, rotary);
     }
-    if (exit_status == SETTINGS_CONFIG_SAVE_TRUE)
+    if (exit_status == SETTINGS_CONFIG_STATUS_TRUE)
     {
         printf("clock (%d): %s, %d", index, title.c_str(), clock_type);
         clock.set_title(title);
@@ -453,16 +500,17 @@ static bool settings_config_clocks(ST7735 &display, Rotary &rotary, Settings &se
     {
         auto &current_msg = msgs[i]; // just for comfort
         current_msg.id = i;
-        current_msg.msg = GraphicsText(0, 0, clocks[i].get_title(), 1);
-        current_msg.func = settings_config_set_clock;
+        current_msg.graphic_text = GraphicsText(0, 0, clocks[i].get_title(), 1);
+        current_msg.click_func = settings_config_set_clock;
+        current_msg.hold_func = settings_config_remove_clock;
     }
     // set exit msg
-    msgs[length - 1] = {length - 1, GraphicsText(0, 0, "Exit", 1), settings_config_exit};
+    msgs[length - 1] = {length - 1, GraphicsText(0, 0, "Exit", 1), settings_config_exit, settings_config_ignore};
 
     // set msgs position
     for (size_t i = 0; i < length; i++)
     {
-        auto &current_msg = msgs[i].msg; // just for comfort
+        auto &current_msg = msgs[i].graphic_text; // just for comfort
         current_msg.center_x(ST7735_WIDTH / 2);
         current_msg.center_y(ST7735_HEIGHT / (SETTINGS_CONFIG_MAX_ROWS + 1) * (i + 1));
     }
@@ -482,15 +530,15 @@ void settings_config_main(ST7735 &display, Rotary &rotary, Settings &settings)
 {
     int length = 0;
     ConfigHeader msgs[] = {
-        {length++, GraphicsText(0, 0, "Date/Time", 1), settings_config_datetime},
-        {length++, GraphicsText(0, 0, "Clocks", 1), settings_config_clocks},
-        {length++, GraphicsText(0, 0, "Reset", 1), settings_config_reset},
-        {length++, GraphicsText(0, 0, "Exit", 1), settings_config_exit},
+        {length++, GraphicsText(0, 0, "Date/Time", 1), settings_config_datetime, settings_config_ignore},
+        {length++, GraphicsText(0, 0, "Clocks", 1), settings_config_clocks, settings_config_ignore},
+        {length++, GraphicsText(0, 0, "Reset", 1), settings_config_reset, settings_config_ignore},
+        {length++, GraphicsText(0, 0, "Exit", 1), settings_config_exit, settings_config_ignore},
     };
     for (size_t i = 0; i < length; i++)
     {
-        msgs[i].msg.center_x(ST7735_WIDTH / 2);
-        msgs[i].msg.center_y(ST7735_HEIGHT / (SETTINGS_CONFIG_MAX_ROWS + 1) * (i + 1));
+        msgs[i].graphic_text.center_x(ST7735_WIDTH / 2);
+        msgs[i].graphic_text.center_y(ST7735_HEIGHT / (SETTINGS_CONFIG_MAX_ROWS + 1) * (i + 1));
     }
     display_settings_config(display, rotary, settings, msgs, length);
 }
