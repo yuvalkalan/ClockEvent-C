@@ -36,7 +36,7 @@ pico_sdk_init()
 # Run python scripts
 message("Running create_font python script")
 execute_process(COMMAND
-    py src/python_scripts/create_font.py
+    py src/python/create_font.py
     WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
 )
 

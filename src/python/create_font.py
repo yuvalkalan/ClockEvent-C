@@ -5,7 +5,7 @@ import numpy as np
 
 WIDTH = 10
 HEIGHT = 22
-FONT_PATH = r'src\python_scripts\JetBrainsMono-ExtraLight.ttf'
+FONT_PATH = r'src\python\JetBrainsMono-ExtraLight.ttf'
 DST_PATH = r"src\graphics\ST7735\font.h"
 # Define colors
 WHITE = (255, 255, 255)
