@@ -1,4 +1,5 @@
 #include "settings_config/settings_config.h"
+
 // display pins -----------------------
 #define ST7735_PIN_DC 9    // Data/Command
 #define ST7735_PIN_RST 8   // Reset
@@ -7,9 +8,9 @@
 #define ST7735_PIN_CS 12   // Chip Select
 // ------------------------------------
 // button pin -------------------------
-#define BUTTON_PIN 16
-#define ROTARY_PIN_OUT_A 13
-#define ROTARY_PIN_OUT_B 7
+#define BUTTON_PIN 0       // rotary button pin
+#define ROTARY_PIN_OUT_A 1 // rotary input 1 pin
+#define ROTARY_PIN_OUT_B 2 // rotary input 2 pin
 // ------------------------------------
 
 std::string tm_to_string(const tm &timeinfo)
@@ -131,17 +132,3 @@ int main()
     }
     return 0;
 }
-
-// int main()
-// {
-//     init_all();
-//     sleep_ms(1000);
-//     ST7735 display(ST7735_SPI_PORT, ST7735_SPI_BAUDRATE, ST7735_PIN_SCK, ST7735_PIN_MOSI, ST7735_PIN_CS, ST7735_PIN_DC, ST7735_PIN_RST);
-//     display.init_red();
-//     display.fill(ST7735_BLACK);
-//     Rotary rotary(ROTARY_PIN_OUT_A, ROTARY_PIN_OUT_B, BUTTON_PIN);
-//     copy_DS3231_time();
-//     receive_string_from_user(display, rotary, "Title");
-
-//     return 0;
-// }
