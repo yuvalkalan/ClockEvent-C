@@ -13,6 +13,7 @@
 #define ROTARY_PIN_OUT_A 1 // rotary input 1 pin
 #define ROTARY_PIN_OUT_B 2 // rotary input 2 pin
 // ------------------------------------
+#define INACTIVE_TURN_OFF_TIMEOUT 10 // turn off after this time (in sec)
 
 std::string tm_to_string(const tm &timeinfo)
 {
@@ -40,6 +41,24 @@ static int init_all()
         printf("DS3231 initialized.\n");
     }
     return 0;
+}
+
+void enter_dormant(ST7735 &display, Rotary &rotary)
+{
+    // power off display
+    display.turn_off();
+    // enter dormant mode until button clicked
+    sleep_goto_dormant_until_pin(BUTTON_PIN, false, false);
+    // reconfig rotary pins
+    rotary.config_pins();
+    // reconfig ds3231
+    initDS3231();
+    // reconfig display
+    display.turn_on();
+    display.init_red();
+    display.fill(ST7735_BLACK);
+    display.update();
+    sleep_ms(100);
 }
 
 int main()
@@ -82,6 +101,7 @@ int main()
     uint8_t clock_cx = ST7735_WIDTH / 2, clock_radius = (ST7735_WIDTH > ST7735_HEIGHT ? ST7735_HEIGHT : ST7735_WIDTH) / 4, clock_cy = ST7735_HEIGHT - clock_radius - 10;
     int frames = 0;
     auto lastTime = std::chrono::high_resolution_clock::now();
+    auto up_time = std::chrono::high_resolution_clock::now(); // use this clock to turn off display when inactive
     while (true)
     {
         rotary.btn.update();
@@ -89,29 +109,26 @@ int main()
         if (spins)
         {
             clock_index = ROUND_MOD(clock_index, spins, clocks_length);
+            up_time = std::chrono::high_resolution_clock::now();
         }
         if (rotary.btn.clicked())
         {
-            // power off display
-            display.turn_off();
-            // disable watchdog
-            watchdog_disable();
-            // enter dormant mode until button clicked
-            sleep_goto_dormant_until_pin(BUTTON_PIN, false, false);
-            // reconfig rotary pins
-            rotary.config_pins();
-            // reconfig ds3231
-            initDS3231();
-            // reconfig display
-            display.turn_on();
-            display.init_red();
-            display.fill(ST7735_BLACK);
-            display.update();
-            sleep_ms(100);
+            enter_dormant(display, rotary);
+            // reset clock
+            up_time = std::chrono::high_resolution_clock::now();
         }
         if (rotary.btn.hold_down())
         {
             settings_config_main(display, rotary, settings);
+            up_time = std::chrono::high_resolution_clock::now();
+        }
+        auto current_time = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<float> up_delta = current_time - up_time;
+        if (up_delta.count() > INACTIVE_TURN_OFF_TIMEOUT)
+        {
+            enter_dormant(display, rotary);
+            // reset clock
+            up_time = std::chrono::high_resolution_clock::now();
         }
         // display current clock time -------------------------------
         const Clock &current_clock = clocks[clock_index];
@@ -137,14 +154,14 @@ int main()
         // ----------------------------------------------------------
         // calculate fps (for debugging) ----------------------------
         frames += 1;
-        auto currentTime = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<float> deltaTime = currentTime - lastTime;
+        current_time = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<float> delta_time = current_time - lastTime;
         // Update FPS every second
-        if (deltaTime.count() >= 1.0f)
+        if (delta_time.count() >= 1.0f)
         {
-            float fps = frames / deltaTime.count(); // Calculate FPS
-            frames = 0;                             // Reset frame count
-            lastTime = currentTime;                 // Reset time
+            float fps = frames / delta_time.count(); // Calculate FPS
+            frames = 0;                              // Reset frame count
+            lastTime = current_time;                 // Reset time
             // Output FPS
             printf("fps: %f\n", fps);
         }

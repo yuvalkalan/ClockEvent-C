@@ -12,7 +12,7 @@ struct ConfigHeader
 void software_reset()
 {
     // reset the pico
-    watchdog_enable(1, 1);
+    watchdog_enable(1, true);
     while (1)
         ;
 }
