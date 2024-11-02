@@ -1,4 +1,7 @@
 #include "settings_config.h"
+#include <hardware/clocks.h>
+#include <hardware/rosc.h>
+#include <pico/runtime_init.h>
 
 typedef bool (*config_func)(ST7735 &display, Rotary &rotary, Settings &settings, int index);
 struct ConfigHeader
@@ -9,12 +12,27 @@ struct ConfigHeader
     config_func hold_func;
 };
 
+uint orginsave = scb_hw->scr;
+uint clock0 = clocks_hw->sleep_en0;
+uint clock1 = clocks_hw->sleep_en1;
+
+void reset_clocks()
+{
+    rosc_write(&rosc_hw->ctrl, ROSC_CTRL_ENABLE_BITS);
+    scb_hw->scr = orginsave;
+    clocks_hw->sleep_en0 = clock0;
+    clocks_hw->sleep_en1 = clock1;
+    clocks_init();
+    stdio_init_all();
+    printf("switch off led\n");
+    uart_default_tx_wait_blocking();
+}
+
 void software_reset()
 {
     // reset the pico
-    watchdog_enable(1, true);
-    while (1)
-        ;
+    reset_clocks();
+    watchdog_reboot(0, 0, 0);
 }
 
 static void tm_add_sec(tm &time, int sec)

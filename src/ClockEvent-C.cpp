@@ -1,5 +1,6 @@
 #include "settings_config/settings_config.h"
 #include "pico/sleep.h"
+
 // display pins -----------------------
 #define ST7735_PIN_DC 9     // Data/Command
 #define ST7735_PIN_RST 8    // Reset
@@ -29,7 +30,6 @@ static int init_all()
 {
     stdio_init_all();
     sleep_run_from_xosc();
-
     int initStatus = initDS3231();
     if (initStatus)
     {
@@ -49,6 +49,7 @@ void enter_dormant(ST7735 &display, Rotary &rotary)
     display.turn_off();
     // enter dormant mode until button clicked
     sleep_goto_dormant_until_pin(BUTTON_PIN, false, false);
+    // reset_clocks(orginsave, clock0, clock1); // recover from dormant
     // reconfig rotary pins
     rotary.config_pins();
     // reconfig ds3231
