@@ -1,5 +1,4 @@
 #pragma once
-#include "hardware/rtc.h"
 #include <hardware/watchdog.h>
 #include <chrono>
 #include "../graphics/graphics.h"
@@ -28,4 +27,3 @@
 void software_reset();
 void settings_config_main(ST7735 &display, Rotary &rotary, Settings &settings);
 tm get_rtc_time();
-void copy_DS3231_time();

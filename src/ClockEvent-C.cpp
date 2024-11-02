@@ -27,6 +27,8 @@ std::string tm_to_string(const tm &timeinfo)
 static int init_all()
 {
     stdio_init_all();
+    sleep_run_from_xosc();
+
     int initStatus = initDS3231();
     if (initStatus)
     {
@@ -37,7 +39,6 @@ static int init_all()
     {
         printf("DS3231 initialized.\n");
     }
-    rtc_init();
     return 0;
 }
 
@@ -54,7 +55,6 @@ int main()
     ST7735 display(ST7735_SPI_PORT, ST7735_SPI_BAUDRATE, ST7735_PIN_SCK, ST7735_PIN_MOSI, ST7735_PIN_CS, ST7735_PIN_DC, ST7735_PIN_RST, ST7735_PIN_POWER);
     display.init_red();
     display.fill(ST7735_BLACK);
-    copy_DS3231_time();
     // ------------------------------------------
     Clock clocks[1 + SETTINGS_MAX_CLOCKS]; // add one for real clock
     clocks[0] = Clock(SETTINGS_CLOCK_TYPE_RAW, "Clock", get_rtc_time());
@@ -94,8 +94,9 @@ int main()
         {
             // power off display
             display.turn_off();
+            // disable watchdog
+            watchdog_disable();
             // enter dormant mode until button clicked
-            sleep_run_from_xosc();
             sleep_goto_dormant_until_pin(BUTTON_PIN, false, false);
             // reconfig rotary pins
             rotary.config_pins();
@@ -106,8 +107,6 @@ int main()
             display.init_red();
             display.fill(ST7735_BLACK);
             display.update();
-            // set rtc
-            copy_DS3231_time();
             sleep_ms(100);
         }
         if (rotary.btn.hold_down())
@@ -153,68 +152,3 @@ int main()
     }
     return 0;
 }
-
-// static bool awake;
-
-// static void sleep_callback()
-// {
-//     printf("awake!\n");
-//     awake = true;
-// }
-// static void rtc_sleep(ST7735 &display)
-// {
-//     datetime_t t = {
-//         .year = 2020,
-//         .month = 06,
-//         .day = 05,
-//         .dotw = 5,
-//         .hour = 15,
-//         .min = 45,
-//         .sec = 00};
-
-//     datetime_t alarm = {
-//         .year = 2020,
-//         .month = 06,
-//         .day = 05,
-//         .dotw = 5,
-//         .hour = 15,
-//         .min = 45,
-//         .sec = 10};
-//     rtc_set_datetime(&t);
-//     sleep_goto_sleep_until(&alarm, &sleep_callback);
-// }
-
-// int main()
-// {
-//     // init -------------------------------------
-//     int error = init_all();
-//     if (error)
-//         return error;
-//     sleep_ms(1000);
-//     printf("start!\n");
-//     Settings settings;
-//     Rotary rotary(ROTARY_PIN_OUT_A, ROTARY_PIN_OUT_B, BUTTON_PIN);
-//     ST7735 display(ST7735_SPI_PORT, ST7735_SPI_BAUDRATE, ST7735_PIN_SCK, ST7735_PIN_MOSI, ST7735_PIN_CS, ST7735_PIN_DC, ST7735_PIN_RST, ST7735_PIN_POWER);
-//     display.init_red();
-//     display.fill(ST7735_BLACK);
-//     display.update();
-//     copy_DS3231_time();
-//     // ------------------------------------------
-//     awake = false;
-//     gpio_init(25);
-//     gpio_set_dir(25, GPIO_OUT);
-//     sleep_ms(1000);
-//     display.turn_off();
-//     sleep_goto_dormant_until_edge_high(BUTTON_PIN);
-//     gpio_put(25, true);
-//     // rtc_sleep(display);
-//     display.turn_on();
-//     display.init_red();
-//     display.fill(ST7735_GREEN);
-//     display.update();
-//     while (awake)
-//     {
-//         tight_loop_contents();
-//     }
-//     return 0;
-// }

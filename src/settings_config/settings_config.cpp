@@ -416,7 +416,6 @@ static bool settings_config_datetime(ST7735 &display, Rotary &rotary, Settings &
     {
         // set ds3231 amd rtc time
         setDS3231Time(&user_input_datetime);
-        copy_DS3231_time();
     }
     return false;
 }
@@ -548,31 +547,4 @@ tm get_rtc_time()
     tm current_time;
     readDS3231Time(&current_time);
     return current_time;
-    // datetime_t t;
-    // rtc_get_datetime(&t);
-    // tm time;
-    // time.tm_year = t.year - 1900;
-    // time.tm_mon = t.month - 1;
-    // time.tm_mday = t.day;
-    // time.tm_wday = t.dotw;
-    // time.tm_hour = t.hour;
-    // time.tm_min = t.min;
-    // time.tm_sec = t.sec;
-    // return time;
-}
-void copy_DS3231_time()
-{
-    tm current_time;
-    readDS3231Time(&current_time);
-
-    datetime_t t = {
-        .year = int16_t(current_time.tm_year + 1900),
-        .month = int8_t(current_time.tm_mon + 1),
-        .day = int8_t(current_time.tm_mday),
-        .dotw = int8_t(current_time.tm_wday), // irrelevant, calculate automatically
-        .hour = int8_t(current_time.tm_hour),
-        .min = int8_t(current_time.tm_min),
-        .sec = int8_t(current_time.tm_sec)};
-    rtc_set_datetime(&t);
-    sleep_ms(10); // wait some time for rtc to reset
 }
