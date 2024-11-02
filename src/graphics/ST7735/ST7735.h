@@ -69,6 +69,7 @@ private:
     uint m_cs_pin;
     uint m_dc_pin;
     uint m_rst_pin;
+    uint m_power_pin;
     uint16_t m_buffer[ST7735_WIDTH * ST7735_HEIGHT];
 
 private:
@@ -79,7 +80,7 @@ private:
     void reset();
 
 public:
-    ST7735(spi_inst_t *spi, uint baudrate, uint sck_pin, uint mosi_pin, uint cs_pin, uint dc_pin, uint rst_pin);
+    ST7735(spi_inst_t *spi, uint baudrate, uint sck_pin, uint mosi_pin, uint cs_pin, uint dc_pin, uint rst_pin, uint power_pin);
     void init_red();
     void update();
     void draw_pixel(uint8_t x, uint8_t y, uint16_t color);
@@ -91,4 +92,6 @@ public:
     void draw_circle(uint8_t xc, uint8_t yc, uint8_t r, uint8_t border_width, uint16_t color);
     void draw_line(uint8_t s_x, uint8_t s_y, uint8_t e_x, uint8_t e_y, uint8_t border_width, uint16_t color);
     void draw_line_with_angle(uint8_t s_x, uint8_t s_y, float length, float angle_deg, uint8_t border_width, uint16_t color);
+    void turn_off();
+    void turn_on();
 };

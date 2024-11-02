@@ -79,7 +79,7 @@ static tm receive_datetime_from_user(ST7735 &display, Rotary &rotary, const tm &
             }
             else if (current_select == SETTINGS_CONFIG_YEARS)
             {
-                date.set_year(1900 + ROUND_MOD(date.get_year() - 1900, spins, 201)); // 1900 - 2100
+                date.set_year(1900 + ROUND_MOD(date.get_year() - 1900, spins, 200)); // 1900 - 2099 (DS3231 limit)
                                                                                      // if change years should check day (for 29.02)
                 date.set_day(ROUND_MOD(date.get_day() - 1, 0, date.month_days()));   // 0 - month_days()
             }
@@ -545,17 +545,20 @@ void settings_config_main(ST7735 &display, Rotary &rotary, Settings &settings)
 
 tm get_rtc_time()
 {
-    datetime_t t;
-    rtc_get_datetime(&t);
-    tm time;
-    time.tm_year = t.year - 1900;
-    time.tm_mon = t.month - 1;
-    time.tm_mday = t.day;
-    time.tm_wday = t.dotw;
-    time.tm_hour = t.hour;
-    time.tm_min = t.min;
-    time.tm_sec = t.sec;
-    return time;
+    tm current_time;
+    readDS3231Time(&current_time);
+    return current_time;
+    // datetime_t t;
+    // rtc_get_datetime(&t);
+    // tm time;
+    // time.tm_year = t.year - 1900;
+    // time.tm_mon = t.month - 1;
+    // time.tm_mday = t.day;
+    // time.tm_wday = t.dotw;
+    // time.tm_hour = t.hour;
+    // time.tm_min = t.min;
+    // time.tm_sec = t.sec;
+    // return time;
 }
 void copy_DS3231_time()
 {

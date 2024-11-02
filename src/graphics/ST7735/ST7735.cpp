@@ -8,30 +8,29 @@ static bool inline is_inside_circle(int x, int y, int xc, int yc, int r)
     return (dx * dx + dy * dy) < (r * r); // Check using distance squared
 }
 
-ST7735::ST7735(spi_inst_t *spi, uint baudrate, uint sck_pin, uint mosi_pin, uint cs_pin, uint dc_pin, uint rst_pin)
+ST7735::ST7735(spi_inst_t *spi, uint baudrate, uint sck_pin, uint mosi_pin, uint cs_pin, uint dc_pin, uint rst_pin, uint power_pin)
     : m_spi(spi),
       m_baudrate(baudrate),
       m_sck_pin(sck_pin),
       m_mosi_pin(mosi_pin),
       m_cs_pin(cs_pin),
       m_dc_pin(dc_pin),
-      m_rst_pin(rst_pin)
+      m_rst_pin(rst_pin),
+      m_power_pin(power_pin)
 {
-    // Initialize chosen SPI port
-    spi_init(m_spi, m_baudrate);
-    gpio_set_function(m_sck_pin, GPIO_FUNC_SPI);
-    gpio_set_function(m_mosi_pin, GPIO_FUNC_SPI);
     // Configure the control pins
     gpio_init(m_cs_pin);
     gpio_set_dir(m_cs_pin, GPIO_OUT);
-    gpio_put(m_cs_pin, 1); // Deselect
-
     gpio_init(m_dc_pin);
     gpio_set_dir(m_dc_pin, GPIO_OUT);
-
     gpio_init(m_rst_pin);
     gpio_set_dir(m_rst_pin, GPIO_OUT);
+    gpio_init(m_power_pin);
+    gpio_set_dir(m_power_pin, GPIO_OUT);
+
+    turn_on();
 }
+
 void ST7735::write_command(uint8_t cmd) const
 {
     // Low-level function to send commands
@@ -67,12 +66,10 @@ void ST7735::set_addr_window(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1) con
     y1 += 1;
     uint8_t data[] = {0x00, x0, 0x00, x1};
     write_data_buffer(data, sizeof(data));
-
     // Row address set
     write_command(ST7735_CMD_RASET);
     uint8_t data2[] = {0x00, y0, 0x00, y1};
     write_data_buffer(data2, sizeof(data2));
-
     // Write to RAM
     write_command(ST7735_CMD_RAMWR);
 }
@@ -308,4 +305,22 @@ void ST7735::draw_line_with_angle(uint8_t s_x, uint8_t s_y, float length, float 
 
     // Use the draw_line function to actually draw the line
     draw_line(s_x, s_y, e_x, e_y, border_width, color);
+}
+
+void ST7735::turn_off()
+{
+    spi_deinit(m_spi);
+    gpio_put(m_cs_pin, false);
+    gpio_put(m_dc_pin, false);
+    gpio_put(m_rst_pin, false);
+    gpio_put(m_power_pin, false); // turn off
+}
+void ST7735::turn_on()
+{
+    // Initialize chosen SPI port
+    spi_init(m_spi, m_baudrate);
+    gpio_set_function(m_sck_pin, GPIO_FUNC_SPI);
+    gpio_set_function(m_mosi_pin, GPIO_FUNC_SPI);
+    gpio_put(m_cs_pin, true);    // Deselect
+    gpio_put(m_power_pin, true); // turn on
 }

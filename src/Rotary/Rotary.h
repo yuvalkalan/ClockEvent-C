@@ -19,5 +19,6 @@ private:
 
 public:
     Rotary(int clk, int dt, int button);
+    void config_pins();
     int get_spin();
 };

@@ -2,9 +2,7 @@
 
 Button::Button(int pin) : m_pin(pin)
 {
-    gpio_init(pin);
-    gpio_set_dir(pin, GPIO_IN);
-    gpio_pull_up(pin);
+    config_pins();
     m_value = gpio_get(pin);
 }
 
@@ -94,4 +92,11 @@ bool Button::double_clicked()
 bool Button::hold_down()
 {
     return m_has_hold_down;
+}
+
+void Button::config_pins()
+{
+    gpio_init(m_pin);
+    gpio_set_dir(m_pin, GPIO_IN);
+    gpio_pull_up(m_pin);
 }

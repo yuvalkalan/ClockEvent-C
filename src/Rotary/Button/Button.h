@@ -28,4 +28,5 @@ public:
     bool clicked();
     bool double_clicked();
     bool hold_down();
+    void config_pins();
 };

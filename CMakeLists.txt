@@ -27,6 +27,10 @@ set(PICO_BOARD pico CACHE STRING "Board type")
 
 # Pull in Raspberry Pi Pico SDK (must be before project)
 include(pico_sdk_import.cmake)
+# We also need PICO EXTRAS
+# pico_extras is inside the pico_sdk_path
+set(PICO_EXTRAS_PATH $ENV{PICO_SDK_PATH}/pico_extras)
+include(${PICO_EXTRAS_PATH}/external/pico_extras_import.cmake)
 
 project(ClockEvent-C C CXX ASM)
 
@@ -84,6 +88,7 @@ target_link_libraries(${PROJECT_NAME}
     hardware_watchdog
     hardware_clocks
     hardware_rtc
+    hardware_sleep # from pico_extras
 )
 
 pico_add_extra_outputs(${PROJECT_NAME})

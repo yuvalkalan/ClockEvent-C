@@ -22,17 +22,22 @@ Rotary *Rotary::getInstance()
 
 Rotary::Rotary(int clk, int dt, int button) : m_clk(clk), m_dt(dt), m_last_clk(false), m_spin(0), btn(button)
 {
-    gpio_init(clk);
-    gpio_set_dir(clk, GPIO_IN);
-    gpio_pull_up(clk);
-    gpio_init(dt);
-    gpio_set_dir(dt, GPIO_IN);
-    gpio_pull_up(dt);
+    config_pins();
     m_last_clk = gpio_get(clk);
     gpio_set_irq_enabled_with_callback(clk, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &encoder_callback);
     Rotary::instance = this;
 }
 
+void Rotary::config_pins()
+{
+    gpio_init(m_clk);
+    gpio_set_dir(m_clk, GPIO_IN);
+    gpio_pull_up(m_clk);
+    gpio_init(m_dt);
+    gpio_set_dir(m_dt, GPIO_IN);
+    gpio_pull_up(m_dt);
+    btn.config_pins();
+}
 int Rotary::get_spin()
 {
     int v = m_spin;
